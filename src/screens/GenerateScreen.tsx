@@ -82,13 +82,12 @@ const GenerateScreen = () => {
       const base64 = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      setImageBase64(`data:image/jpeg;base64,${base64}`);
-      return `data:image/jpeg;base64,${base64}`;
+      const base64String = `data:image/jpeg;base64,${base64}`;
+      setImageBase64(base64String);
     }
-    return "";
   };
 
-  const buildQRValue = async () => {
+  const buildQRValue = () => {
     if (qrType === "url" || qrType === "text") return input;
     if (qrType === "wifi") {
       return `WIFI:T:${wifiType};S:${wifiSSID};P:${wifiPassword};;`;
@@ -106,23 +105,17 @@ const GenerateScreen = () => {
         .join("\n");
     }
     if (qrType === "image") {
-      if (imageBase64) return imageBase64;
-      const base64 = await pickImage();
-      return base64;
+      return imageBase64;
     }
     return "";
   };
 
   const handleGenerate = async () => {
-    let value = "";
-    if (qrType === "image") {
-      value = await buildQRValue();
-      if (!value) return;
-      setQrValue(value);
-    } else {
-      value = await buildQRValue();
-      setQrValue(value);
-    }
+    const value = buildQRValue();
+    if (!value) return;
+
+    setQrValue(value);
+
     const newItem: QrHistoryItem = {
       id: Date.now().toString(),
       type: qrType,
