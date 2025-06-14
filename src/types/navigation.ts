@@ -6,4 +6,6 @@ export type RootStackParamList = {
     bgColor: string;
     type: string;
   };
+  ThemeSettings: undefined;
+  AboutScreen: undefined;
 };
