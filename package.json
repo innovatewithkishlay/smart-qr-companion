@@ -31,7 +31,8 @@
     "react-native-view-shot": "^4.0.3",
     "react-native-web": "^0.20.0",
     "expo-camera": "~16.1.8",
-    "expo-image-manipulator": "~13.1.7"
+    "expo-image-manipulator": "~13.1.7",
+    "expo-crypto": "~14.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

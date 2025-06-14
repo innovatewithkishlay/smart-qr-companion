@@ -94,7 +94,14 @@ const GenerateScreen = () => {
       if (!result.canceled && result.assets[0].uri) {
         setProcessing(true);
         const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri);
-        const fileSizeMB = (fileInfo.size || 0) / (1024 * 1024);
+
+        if (!fileInfo.exists || typeof fileInfo.size !== "number") {
+          Alert.alert("Error", "Could not get image information");
+          setProcessing(false);
+          return;
+        }
+
+        const fileSizeMB = fileInfo.size / (1024 * 1024);
 
         if (fileSizeMB > MAX_IMAGE_SIZE_MB) {
           Alert.alert(
@@ -118,7 +125,9 @@ const GenerateScreen = () => {
         );
 
         if (!manipulated.base64) {
-          throw new Error("Failed to process image");
+          Alert.alert("Error", "Failed to process image");
+          setProcessing(false);
+          return;
         }
 
         const base64Data = `data:image/jpeg;base64,${manipulated.base64}`;
