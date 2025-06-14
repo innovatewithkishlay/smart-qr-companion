@@ -6,13 +6,18 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { getHistory, toggleFavorite } from "../utils/history";
 import { QrHistoryItem } from "../types/QrHistory";
 import QRCode from "react-native-qrcode-svg";
 import { Ionicons } from "@expo/vector-icons";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../types/navigation";
 
 const HistoryScreen = () => {
   const [history, setHistory] = useState<QrHistoryItem[]>([]);
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamList, "HistoryMain">>();
 
   const loadHistory = async () => {
     const data = await getHistory();
@@ -20,8 +25,9 @@ const HistoryScreen = () => {
   };
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    const unsubscribe = navigation.addListener("focus", loadHistory);
+    return unsubscribe;
+  }, [navigation]);
 
   const handleFavorite = async (id: string) => {
     await toggleFavorite(id);
@@ -29,7 +35,10 @@ const HistoryScreen = () => {
   };
 
   const renderItem = ({ item }: { item: QrHistoryItem }) => (
-    <View style={styles.item}>
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => navigation.navigate("QrDetail", item)}
+    >
       <QRCode
         value={item.value}
         size={60}
@@ -50,7 +59,7 @@ const HistoryScreen = () => {
           color="#ffc107"
         />
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   return (
