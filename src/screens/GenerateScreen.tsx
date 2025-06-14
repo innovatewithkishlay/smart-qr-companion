@@ -42,7 +42,7 @@ const BG_COLOR_PRESETS = [
   "#e0f7fa",
   "#ffcccb",
 ];
-const MAX_IMAGE_SIZE_KB = 100;
+const MAX_QR_CAPACITY = 2953; // Maximum characters for QR Code Version 40 (L level)
 
 const GenerateScreen = () => {
   const [qrType, setQrType] = useState("url");
@@ -77,39 +77,42 @@ const GenerateScreen = () => {
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.5,
+        quality: 0.2,
         base64: false,
       });
 
       if (!result.canceled && result.assets[0].uri) {
-        let uri = result.assets[0].uri;
         const manipulated = await ImageManipulator.manipulateAsync(
-          uri,
-          [{ resize: { width: 512 } }],
+          result.assets[0].uri,
+          [{ resize: { width: 200 } }],
           {
-            compress: 0.5,
+            compress: 0.2,
             format: ImageManipulator.SaveFormat.JPEG,
             base64: true,
           }
         );
+
         if (!manipulated.base64) {
           Alert.alert("Error", "Failed to process image");
           return;
         }
-        const base64 = manipulated.base64;
-        const sizeKB = (base64.length * 0.75) / 1024;
-        if (sizeKB > MAX_IMAGE_SIZE_KB) {
+
+        const base64Data = `data:image/jpeg;base64,${manipulated.base64}`;
+
+        if (base64Data.length > MAX_QR_CAPACITY) {
           Alert.alert(
             "Image Too Large",
-            `Please select an image smaller than ${MAX_IMAGE_SIZE_KB}KB`
+            "Please select a smaller image or reduce quality",
+            [{ text: "OK" }]
           );
           return;
         }
+
         setSelectedImage(manipulated.uri);
-        setImageBase64(`data:image/jpeg;base64,${base64}`);
+        setImageBase64(base64Data);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to pick or process image");
+      Alert.alert("Error", "Failed to process image");
     }
   };
 
@@ -133,13 +136,24 @@ const GenerateScreen = () => {
 
   const handleGenerate = async () => {
     try {
-      if (qrType === "image" && !imageBase64) {
-        Alert.alert("Error", "Please select an image first");
+      const value = buildQRValue();
+
+      if (!value) {
+        Alert.alert("Error", "Please enter valid content");
         return;
       }
-      const value = buildQRValue();
-      if (!value) return;
+
+      if (value.length > MAX_QR_CAPACITY) {
+        Alert.alert(
+          "Data Too Large",
+          `QR code can only hold up to ${MAX_QR_CAPACITY} characters.\nCurrent size: ${value.length}`,
+          [{ text: "OK" }]
+        );
+        return;
+      }
+
       setQrValue(value);
+
       const newItem: QrHistoryItem = {
         id: Date.now().toString(),
         type: qrType,
@@ -151,7 +165,11 @@ const GenerateScreen = () => {
       };
       await addToHistory(newItem);
     } catch (error) {
-      Alert.alert("Error", "Failed to generate QR code");
+      Alert.alert(
+        "Error",
+        "Failed to generate QR code. Data might be too large."
+      );
+      setQrValue("");
     }
   };
 
@@ -159,8 +177,10 @@ const GenerateScreen = () => {
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") throw new Error("Permission denied");
+
       const uri = await viewShotRef.current?.capture?.();
       if (!uri) throw new Error("Capture failed");
+
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert("Success", "QR code saved to gallery!");
     } catch (error) {
@@ -194,6 +214,7 @@ const GenerateScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Generate QR Code</Text>
+
       <View style={styles.typeSelector}>
         {QR_TYPES.map((type) => (
           <TouchableOpacity
@@ -215,6 +236,7 @@ const GenerateScreen = () => {
           </TouchableOpacity>
         ))}
       </View>
+
       {(qrType === "url" || qrType === "text") && (
         <TextInput
           style={styles.input}
@@ -225,6 +247,7 @@ const GenerateScreen = () => {
           autoCorrect={false}
         />
       )}
+
       {qrType === "wifi" && (
         <>
           <TextInput
@@ -262,6 +285,7 @@ const GenerateScreen = () => {
           </View>
         </>
       )}
+
       {qrType === "vcard" && (
         <>
           <TextInput
@@ -286,6 +310,7 @@ const GenerateScreen = () => {
           />
         </>
       )}
+
       {qrType === "image" && (
         <>
           <TouchableOpacity style={styles.button} onPress={pickImage}>
@@ -302,6 +327,7 @@ const GenerateScreen = () => {
           )}
         </>
       )}
+
       <Text style={styles.sectionLabel}>QR Code Color</Text>
       <View style={styles.colorRow}>
         {COLOR_PRESETS.map((color) => (
@@ -316,6 +342,7 @@ const GenerateScreen = () => {
           />
         ))}
       </View>
+
       <Text style={styles.sectionLabel}>Background Color</Text>
       <View style={styles.colorRow}>
         {BG_COLOR_PRESETS.map((color) => (
@@ -330,6 +357,7 @@ const GenerateScreen = () => {
           />
         ))}
       </View>
+
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerate}
@@ -343,6 +371,7 @@ const GenerateScreen = () => {
       >
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
+
       <ViewShot
         ref={viewShotRef}
         options={{ format: "png", quality: 1 }}
@@ -355,6 +384,13 @@ const GenerateScreen = () => {
               size={200}
               color={qrColor}
               backgroundColor={bgColor}
+              onError={() => {
+                Alert.alert(
+                  "Error",
+                  "Failed to generate QR code. Data too large."
+                );
+                setQrValue("");
+              }}
             />
           ) : (
             <Text style={styles.placeholder}>
@@ -363,6 +399,7 @@ const GenerateScreen = () => {
           )}
         </View>
       </ViewShot>
+
       {qrValue && (
         <View style={styles.actionRow}>
           <TouchableOpacity
