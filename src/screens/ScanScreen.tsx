@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,26 +8,19 @@ import {
   Linking,
   Clipboard,
 } from "react-native";
-import { Camera } from "expo-camera";
+import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { addToHistory } from "../utils/history";
 import { QrHistoryItem } from "../types/QrHistory";
 
 const ScanScreen = () => {
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
   const [scannedData, setScannedData] = useState("");
   const [scannedType, setScannedType] = useState("");
   const isFocused = useIsFocused();
-
-  useEffect(() => {
-    (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasPermission(status === "granted");
-    })();
-  }, []);
 
   const detectQRType = (data: string): string => {
     if (data.startsWith("http://") || data.startsWith("https://")) return "url";
@@ -39,7 +32,7 @@ const ScanScreen = () => {
     return "text";
   };
 
-  const handleBarCodeScanned = async ({ data }: { data: string }) => {
+  const handleBarcodeScanned = async ({ data }: { data: string }) => {
     setScanned(true);
     setScannedData(data);
     const type = detectQRType(data);
@@ -120,7 +113,7 @@ const ScanScreen = () => {
     setScannedType("");
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.permissionText}>Requesting camera access...</Text>
@@ -128,14 +121,14 @@ const ScanScreen = () => {
     );
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <View style={styles.centerContainer}>
         <Ionicons name="camera-outline" size={40} color="#ff4444" />
         <Text style={styles.permissionText}>Camera access denied</Text>
         <TouchableOpacity
           style={styles.permissionButton}
-          onPress={() => Camera.requestCameraPermissionsAsync()}
+          onPress={requestPermission}
         >
           <Text style={styles.permissionButtonText}>Enable Camera</Text>
         </TouchableOpacity>
@@ -146,15 +139,11 @@ const ScanScreen = () => {
   return (
     <View style={styles.container}>
       {isFocused && (
-        <Camera
+        <CameraView
           style={StyleSheet.absoluteFill}
-          onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          flashMode={
-            flashOn
-              ? Camera.Constants.FlashMode.torch
-              : Camera.Constants.FlashMode.off
-          }
-          ratio="16:9"
+          onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
+          flash={flashOn ? FlashMode.Torch : FlashMode.Off}
+          facing="back"
         >
           <View style={styles.overlay}>
             <View style={styles.header}>
@@ -170,14 +159,12 @@ const ScanScreen = () => {
                 />
               </TouchableOpacity>
             </View>
-
             <View style={styles.scanFrame}>
               <View style={[styles.corner, styles.topLeft]} />
               <View style={[styles.corner, styles.topRight]} />
               <View style={[styles.corner, styles.bottomLeft]} />
               <View style={[styles.corner, styles.bottomRight]} />
             </View>
-
             {scanned && (
               <View style={styles.resultPanel}>
                 <View style={styles.resultHeader}>
@@ -216,7 +203,7 @@ const ScanScreen = () => {
               </View>
             )}
           </View>
-        </Camera>
+        </CameraView>
       )}
     </View>
   );
