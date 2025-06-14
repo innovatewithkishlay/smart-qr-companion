@@ -8,9 +8,10 @@ import HistoryScreen from "../screens/HistoryScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import QrDetailScreen from "../screens/QrDetailScreen";
 import { Ionicons } from "@expo/vector-icons";
+import { RootStackParamList } from "../types/navigation";
 
 const Tab = createBottomTabNavigator();
-const HistoryStack = createStackNavigator();
+const HistoryStack = createStackNavigator<RootStackParamList>();
 
 const HistoryStackScreen = () => (
   <HistoryStack.Navigator screenOptions={{ headerShown: false }}>
