@@ -15,8 +15,9 @@ import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import * as ImagePicker from "expo-image-picker";
-import * as ImageManipulator from "expo-image-manipulator";
 import * as FileSystem from "expo-file-system";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Crypto from "expo-crypto";
 import { QrHistoryItem } from "../types/QrHistory";
 import { addToHistory } from "../utils/history";
 
@@ -44,8 +45,6 @@ const BG_COLOR_PRESETS = [
   "#e0f7fa",
   "#ffcccb",
 ];
-const MAX_QR_CAPACITY = 2953;
-const MAX_IMAGE_SIZE_MB = 5;
 
 const GenerateScreen = () => {
   const [qrType, setQrType] = useState("url");
@@ -57,7 +56,7 @@ const GenerateScreen = () => {
   const [vcardPhone, setVcardPhone] = useState("");
   const [vcardEmail, setVcardEmail] = useState("");
   const [selectedImage, setSelectedImage] = useState<string>("");
-  const [imageBase64, setImageBase64] = useState<string>("");
+  const [imageRef, setImageRef] = useState<string>("");
   const [qrValue, setQrValue] = useState("");
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
@@ -75,80 +74,42 @@ const GenerateScreen = () => {
     }
   };
 
-  const getCompressionQuality = (fileSizeMB: number) => {
-    if (fileSizeMB <= 1) return 0.7;
-    if (fileSizeMB <= 3) return 0.5;
-    return 0.3;
-  };
-
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
-        quality: 0.8,
+        quality: 1,
         base64: false,
       });
 
       if (!result.canceled && result.assets[0].uri) {
         setProcessing(true);
-        const fileInfo = await FileSystem.getInfoAsync(result.assets[0].uri);
 
-        if (!fileInfo.exists || typeof fileInfo.size !== "number") {
-          Alert.alert("Error", "Could not get image information");
-          setProcessing(false);
-          return;
-        }
-
-        const fileSizeMB = fileInfo.size / (1024 * 1024);
-
-        if (fileSizeMB > MAX_IMAGE_SIZE_MB) {
-          Alert.alert(
-            "Large Image",
-            `This image is ${fileSizeMB.toFixed(
-              1
-            )}MB (max ${MAX_IMAGE_SIZE_MB}MB). Processing may take longer.`,
-            [{ text: "Continue" }]
-          );
-        }
-
-        const quality = getCompressionQuality(fileSizeMB);
-        const manipulated = await ImageManipulator.manipulateAsync(
-          result.assets[0].uri,
-          [{ resize: { width: 512 } }],
-          {
-            compress: quality,
-            format: ImageManipulator.SaveFormat.JPEG,
-            base64: true,
-          }
+        // Generate a unique ID for this image
+        const imageId = await Crypto.digestStringAsync(
+          Crypto.CryptoDigestAlgorithm.SHA256,
+          result.assets[0].uri + Date.now()
         );
 
-        if (!manipulated.base64) {
-          Alert.alert("Error", "Failed to process image");
-          setProcessing(false);
-          return;
-        }
+        const imageDir = `${FileSystem.documentDirectory}images/`;
+        await FileSystem.makeDirectoryAsync(imageDir, { intermediates: true });
+        const newPath = `${imageDir}${imageId}.jpg`;
+        await FileSystem.copyAsync({
+          from: result.assets[0].uri,
+          to: newPath,
+        });
 
-        const base64Data = `data:image/jpeg;base64,${manipulated.base64}`;
+        await AsyncStorage.setItem(imageId, newPath);
 
-        if (base64Data.length > MAX_QR_CAPACITY) {
-          Alert.alert(
-            "Image Too Large",
-            "Could not fit image into QR code even after compression",
-            [{ text: "OK" }]
-          );
-          setProcessing(false);
-          return;
-        }
-
-        setSelectedImage(manipulated.uri);
-        setImageBase64(base64Data);
+        setSelectedImage(newPath);
+        setImageRef(imageId);
+        setProcessing(false);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to process image");
-    } finally {
       setProcessing(false);
+      Alert.alert("Error", "Failed to process image");
     }
   };
 
@@ -166,23 +127,19 @@ const GenerateScreen = () => {
         "END:VCARD",
       ].join("\n");
     }
-    if (qrType === "image") return imageBase64;
+    if (qrType === "image") return `smartqr://image/${imageRef}`;
     return "";
   };
 
   const handleGenerate = async () => {
     try {
+      if (qrType === "image" && !imageRef) {
+        Alert.alert("Error", "Please select an image first");
+        return;
+      }
       const value = buildQRValue();
       if (!value) {
         Alert.alert("Error", "Please enter valid content");
-        return;
-      }
-      if (value.length > MAX_QR_CAPACITY) {
-        Alert.alert(
-          "Data Too Large",
-          `QR code can only hold up to ${MAX_QR_CAPACITY} characters.\nCurrent size: ${value.length}`,
-          [{ text: "OK" }]
-        );
         return;
       }
       setQrValue(value);
@@ -197,10 +154,7 @@ const GenerateScreen = () => {
       };
       await addToHistory(newItem);
     } catch (error) {
-      Alert.alert(
-        "Error",
-        "Failed to generate QR code. Data might be too large."
-      );
+      Alert.alert("Error", "Failed to generate QR code.");
       setQrValue("");
     }
   };
@@ -237,7 +191,7 @@ const GenerateScreen = () => {
     setVcardPhone("");
     setVcardEmail("");
     setSelectedImage("");
-    setImageBase64("");
+    setImageRef("");
     setQrValue("");
   }, [qrType]);
 
@@ -404,7 +358,7 @@ const GenerateScreen = () => {
           (qrType === "text" && !input.trim()) ||
           (qrType === "wifi" && (!wifiSSID.trim() || !wifiPassword.trim())) ||
           (qrType === "vcard" && !vcardName.trim()) ||
-          (qrType === "image" && !imageBase64)
+          (qrType === "image" && !imageRef)
         }
       >
         <Text style={styles.buttonText}>Generate</Text>
@@ -422,10 +376,7 @@ const GenerateScreen = () => {
               color={qrColor}
               backgroundColor={bgColor}
               onError={() => {
-                Alert.alert(
-                  "Error",
-                  "Failed to generate QR code. Data too large."
-                );
+                Alert.alert("Error", "Failed to generate QR code.");
                 setQrValue("");
               }}
             />
