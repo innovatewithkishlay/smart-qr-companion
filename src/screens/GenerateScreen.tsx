@@ -14,7 +14,7 @@ import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import * as ImagePicker from "expo-image-picker";
-import * as FileSystem from "expo-file-system";
+import * as ImageManipulator from "expo-image-manipulator";
 import { QrHistoryItem } from "../types/QrHistory";
 import { addToHistory } from "../utils/history";
 
@@ -78,13 +78,21 @@ const GenerateScreen = () => {
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.5,
-        base64: true,
-        maxWidth: 512,
-        maxHeight: 512,
+        base64: false,
       });
 
-      if (!result.canceled && result.assets[0].base64) {
-        const base64 = result.assets[0].base64;
+      if (!result.canceled && result.assets[0].uri) {
+        let uri = result.assets[0].uri;
+        const manipulated = await ImageManipulator.manipulateAsync(
+          uri,
+          [{ resize: { width: 512 } }],
+          {
+            compress: 0.5,
+            format: ImageManipulator.SaveFormat.JPEG,
+            base64: true,
+          }
+        );
+        const base64 = manipulated.base64;
         const sizeKB = (base64.length * 0.75) / 1024;
 
         if (sizeKB > MAX_IMAGE_SIZE_KB) {
@@ -95,11 +103,11 @@ const GenerateScreen = () => {
           return;
         }
 
-        setSelectedImage(result.assets[0].uri);
+        setSelectedImage(manipulated.uri);
         setImageBase64(`data:image/jpeg;base64,${base64}`);
       }
     } catch (error) {
-      Alert.alert("Error", "Failed to pick image");
+      Alert.alert("Error", "Failed to pick or process image");
     }
   };
 
@@ -174,7 +182,6 @@ const GenerateScreen = () => {
   };
 
   React.useEffect(() => {
-    // Reset all fields when QR type changes
     setInput("");
     setWifiSSID("");
     setWifiPassword("");
@@ -191,7 +198,6 @@ const GenerateScreen = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Generate QR Code</Text>
 
-      {/* Type Selector */}
       <View style={styles.typeSelector}>
         {QR_TYPES.map((type) => (
           <TouchableOpacity
@@ -214,7 +220,6 @@ const GenerateScreen = () => {
         ))}
       </View>
 
-      {/* Input Fields */}
       {(qrType === "url" || qrType === "text") && (
         <TextInput
           style={styles.input}
@@ -306,7 +311,6 @@ const GenerateScreen = () => {
         </>
       )}
 
-      {/* Color Customization */}
       <Text style={styles.sectionLabel}>QR Code Color</Text>
       <View style={styles.colorRow}>
         {COLOR_PRESETS.map((color) => (
@@ -337,7 +341,6 @@ const GenerateScreen = () => {
         ))}
       </View>
 
-      {/* Generate Button */}
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerate}
@@ -352,7 +355,6 @@ const GenerateScreen = () => {
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
 
-      {/* QR Preview */}
       <ViewShot
         ref={viewShotRef}
         options={{ format: "png", quality: 1 }}
@@ -374,7 +376,6 @@ const GenerateScreen = () => {
         </View>
       </ViewShot>
 
-      {/* Save/Share Buttons */}
       {qrValue && (
         <View style={styles.actionRow}>
           <TouchableOpacity
