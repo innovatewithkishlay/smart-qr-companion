@@ -18,7 +18,8 @@ import { addToHistory } from "../utils/history";
 const QR_TYPES = [
   { label: "URL", value: "url" },
   { label: "Text", value: "text" },
-  // Add more types here in the future
+  { label: "Wi-Fi", value: "wifi" },
+  { label: "Contact", value: "vcard" },
 ];
 
 const COLOR_PRESETS = [
@@ -41,6 +42,12 @@ const BG_COLOR_PRESETS = [
 const GenerateScreen = () => {
   const [qrType, setQrType] = useState("url");
   const [input, setInput] = useState("");
+  const [wifiSSID, setWifiSSID] = useState("");
+  const [wifiPassword, setWifiPassword] = useState("");
+  const [wifiType, setWifiType] = useState("WPA");
+  const [vcardName, setVcardName] = useState("");
+  const [vcardPhone, setVcardPhone] = useState("");
+  const [vcardEmail, setVcardEmail] = useState("");
   const [qrValue, setQrValue] = useState("");
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
@@ -53,11 +60,20 @@ const GenerateScreen = () => {
       case "text":
         return "Enter text";
       default:
-        return "Enter value";
+        return "";
     }
   };
 
-  const buildQRValue = () => input;
+  const buildQRValue = () => {
+    if (qrType === "url" || qrType === "text") return input;
+    if (qrType === "wifi") {
+      return `WIFI:T:${wifiType};S:${wifiSSID};P:${wifiPassword};;`;
+    }
+    if (qrType === "vcard") {
+      return `BEGIN:VCARD\nVERSION:3.0\nFN:${vcardName}\nTEL:${vcardPhone}\nEMAIL:${vcardEmail}\nEND:VCARD`;
+    }
+    return "";
+  };
 
   const handleGenerate = async () => {
     const value = buildQRValue();
@@ -104,6 +120,17 @@ const GenerateScreen = () => {
     }
   };
 
+  React.useEffect(() => {
+    setInput("");
+    setWifiSSID("");
+    setWifiPassword("");
+    setWifiType("WPA");
+    setVcardName("");
+    setVcardPhone("");
+    setVcardEmail("");
+    setQrValue("");
+  }, [qrType]);
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Generate QR Code</Text>
@@ -115,11 +142,7 @@ const GenerateScreen = () => {
               styles.typeButton,
               qrType === type.value && styles.typeButtonActive,
             ]}
-            onPress={() => {
-              setQrType(type.value);
-              setInput("");
-              setQrValue("");
-            }}
+            onPress={() => setQrType(type.value)}
           >
             <Text
               style={[
@@ -132,14 +155,81 @@ const GenerateScreen = () => {
           </TouchableOpacity>
         ))}
       </View>
-      <TextInput
-        style={styles.input}
-        placeholder={getPlaceholder()}
-        value={input}
-        onChangeText={setInput}
-        autoCapitalize="none"
-        autoCorrect={false}
-      />
+
+      {(qrType === "url" || qrType === "text") && (
+        <TextInput
+          style={styles.input}
+          placeholder={getPlaceholder()}
+          value={input}
+          onChangeText={setInput}
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+      )}
+
+      {qrType === "wifi" && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Wi-Fi SSID"
+            value={wifiSSID}
+            onChangeText={setWifiSSID}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Wi-Fi Password"
+            value={wifiPassword}
+            onChangeText={setWifiPassword}
+          />
+          <View style={styles.typeSelector}>
+            {["WPA", "WEP", "nopass"].map((type) => (
+              <TouchableOpacity
+                key={type}
+                style={[
+                  styles.typeButton,
+                  wifiType === type && styles.typeButtonActive,
+                ]}
+                onPress={() => setWifiType(type)}
+              >
+                <Text
+                  style={[
+                    styles.typeButtonText,
+                    wifiType === type && styles.typeButtonTextActive,
+                  ]}
+                >
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
+      )}
+
+      {qrType === "vcard" && (
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Full Name"
+            value={vcardName}
+            onChangeText={setVcardName}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone"
+            value={vcardPhone}
+            onChangeText={setVcardPhone}
+            keyboardType="phone-pad"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={vcardEmail}
+            onChangeText={setVcardEmail}
+            keyboardType="email-address"
+          />
+        </>
+      )}
+
       <Text style={styles.sectionLabel}>QR Code Color</Text>
       <View style={styles.colorRow}>
         {COLOR_PRESETS.map((color) => (
@@ -171,7 +261,12 @@ const GenerateScreen = () => {
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerate}
-        disabled={!input.trim()}
+        disabled={
+          ((qrType === "url" || qrType === "text") && !input.trim()) ||
+          (qrType === "wifi" && !wifiSSID.trim()) ||
+          (qrType === "vcard" &&
+            (!vcardName.trim() || (!vcardPhone.trim() && !vcardEmail.trim())))
+        }
       >
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
@@ -248,7 +343,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     borderRadius: 8,
     padding: 12,
-    marginVertical: 12,
+    marginVertical: 8,
   },
   sectionLabel: {
     fontWeight: "bold",
