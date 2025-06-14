@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -6,13 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
+import { captureRef } from "react-native-view-shot";
+import * as MediaLibrary from "expo-media-library";
+import * as Sharing from "expo-sharing";
 
 const QR_TYPES = [
   { label: "URL", value: "url" },
   { label: "Text", value: "text" },
-  // Add more types here
 ];
 
 const COLOR_PRESETS = [
@@ -38,6 +41,7 @@ const GenerateScreen = () => {
   const [qrValue, setQrValue] = useState("");
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
+  const qrRef = useRef(null);
 
   const getPlaceholder = () => {
     switch (qrType) {
@@ -51,6 +55,39 @@ const GenerateScreen = () => {
   };
 
   const buildQRValue = () => input;
+
+  const saveQrToGallery = async () => {
+    try {
+      const permission = await MediaLibrary.requestPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          "Permission required",
+          "Please grant media library permissions to save images."
+        );
+        return;
+      }
+      const uri = await captureRef(qrRef, {
+        format: "png",
+        quality: 1,
+      });
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Alert.alert("Success", "QR code saved to gallery!");
+    } catch (error) {
+      Alert.alert("Error", "Could not save QR code.");
+    }
+  };
+
+  const shareQrCode = async () => {
+    try {
+      const uri = await captureRef(qrRef, {
+        format: "png",
+        quality: 1,
+      });
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      Alert.alert("Error", "Could not share QR code.");
+    }
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -123,7 +160,7 @@ const GenerateScreen = () => {
       >
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
-      <View style={styles.qrContainer}>
+      <View style={styles.qrContainer} ref={qrRef}>
         {qrValue ? (
           <QRCode
             value={qrValue}
@@ -135,6 +172,19 @@ const GenerateScreen = () => {
           <Text style={styles.placeholder}>Your QR code will appear here</Text>
         )}
       </View>
+      {qrValue ? (
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={saveQrToGallery}
+          >
+            <Text style={styles.actionButtonText}>Save to Gallery</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={shareQrCode}>
+            <Text style={styles.actionButtonText}>Share QR Code</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
     </ScrollView>
   );
 };
@@ -173,7 +223,12 @@ const styles = StyleSheet.create({
     padding: 12,
     marginVertical: 12,
   },
-  sectionLabel: { fontWeight: "bold", marginTop: 16, marginBottom: 4 },
+  sectionLabel: {
+    fontWeight: "bold",
+    marginTop: 16,
+    marginBottom: 4,
+    alignSelf: "flex-start",
+  },
   colorRow: { flexDirection: "row", marginBottom: 8 },
   colorSwatch: {
     width: 32,
@@ -201,8 +256,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     height: 220,
+    width: "100%",
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    padding: 16,
   },
   placeholder: { color: "#aaa", fontSize: 16 },
+  actionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20,
+    width: "100%",
+  },
+  actionButton: {
+    flex: 1,
+    backgroundColor: "#28a745",
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  actionButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
 });
 
 export default GenerateScreen;
