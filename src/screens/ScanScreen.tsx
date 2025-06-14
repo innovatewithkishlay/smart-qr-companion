@@ -8,7 +8,7 @@ import {
   Linking,
   Clipboard,
 } from "react-native";
-import { CameraView, useCameraPermissions, FlashMode } from "expo-camera";
+import { CameraView, useCameraPermissions } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { addToHistory } from "../utils/history";
@@ -142,7 +142,7 @@ const ScanScreen = () => {
         <CameraView
           style={StyleSheet.absoluteFill}
           onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-          flash={flashOn ? FlashMode.Torch : FlashMode.Off}
+          flash={flashOn ? "torch" : "off"}
           facing="back"
         >
           <View style={styles.overlay}>
