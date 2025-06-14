@@ -6,7 +6,7 @@ import ScanScreen from "../screens/ScanScreen";
 import HistoryScreen from "../screens/HistoryScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 import { Ionicons } from "@expo/vector-icons";
-
+import QrDetailScreen from "../screens/QrDetailScreen";
 const Tab = createBottomTabNavigator();
 
 const AppNavigator = () => (
