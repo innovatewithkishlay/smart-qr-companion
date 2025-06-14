@@ -12,10 +12,13 @@ import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
+import { QrHistoryItem } from "../types/QrHistory";
+import { addToHistory } from "../utils/history";
 
 const QR_TYPES = [
   { label: "URL", value: "url" },
   { label: "Text", value: "text" },
+  // Add more types here in the future
 ];
 
 const COLOR_PRESETS = [
@@ -55,6 +58,22 @@ const GenerateScreen = () => {
   };
 
   const buildQRValue = () => input;
+
+  const handleGenerate = async () => {
+    const value = buildQRValue();
+    setQrValue(value);
+
+    const newItem: QrHistoryItem = {
+      id: Date.now().toString(),
+      type: qrType,
+      value,
+      color: qrColor,
+      bgColor,
+      date: Date.now(),
+      favorite: false,
+    };
+    await addToHistory(newItem);
+  };
 
   const saveQrToGallery = async () => {
     try {
@@ -151,7 +170,7 @@ const GenerateScreen = () => {
       </View>
       <TouchableOpacity
         style={styles.button}
-        onPress={() => setQrValue(buildQRValue())}
+        onPress={handleGenerate}
         disabled={!input.trim()}
       >
         <Text style={styles.buttonText}>Generate</Text>
