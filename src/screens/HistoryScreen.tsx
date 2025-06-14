@@ -5,6 +5,7 @@ import {
   FlatList,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getHistory, toggleFavorite } from "../utils/history";
@@ -39,20 +40,33 @@ const HistoryScreen = () => {
       style={styles.item}
       onPress={() => navigation.navigate("QrDetail", item)}
     >
-      <QRCode
-        value={item.value}
-        size={60}
-        color={item.color}
-        backgroundColor={item.bgColor}
-      />
-      <View style={{ flex: 1, marginLeft: 12 }}>
-        <Text numberOfLines={1} style={{ fontWeight: "bold" }}>
+      {item.type === "image" ? (
+        <Image
+          source={{ uri: item.value }}
+          style={styles.thumbnail}
+          resizeMode="cover"
+        />
+      ) : (
+        <QRCode
+          value={item.value}
+          size={60}
+          color={item.color}
+          backgroundColor={item.bgColor}
+        />
+      )}
+      <View style={styles.textContainer}>
+        <Text numberOfLines={1} style={styles.typeText}>
           {item.type.toUpperCase()}
         </Text>
-        <Text numberOfLines={1}>{item.value}</Text>
+        <Text numberOfLines={1} style={styles.valueText}>
+          {item.type === "image" ? "Image QR Code" : item.value}
+        </Text>
         <Text style={styles.date}>{new Date(item.date).toLocaleString()}</Text>
       </View>
-      <TouchableOpacity onPress={() => handleFavorite(item.id)}>
+      <TouchableOpacity
+        onPress={() => handleFavorite(item.id)}
+        style={styles.favoriteButton}
+      >
         <Ionicons
           name={item.favorite ? "star" : "star-outline"}
           size={28}
@@ -63,18 +77,14 @@ const HistoryScreen = () => {
   );
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 22, fontWeight: "bold", marginBottom: 12 }}>
-        Recent QR Codes
-      </Text>
+    <View style={styles.container}>
+      <Text style={styles.title}>Recent QR Codes</Text>
       <FlatList
         data={history}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListEmptyComponent={
-          <Text style={{ color: "#888", textAlign: "center", marginTop: 40 }}>
-            No history yet.
-          </Text>
+          <Text style={styles.emptyText}>No history yet.</Text>
         }
       />
     </View>
@@ -82,18 +92,62 @@ const HistoryScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#ffffff",
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 12,
+    color: "#1a1a1a",
+  },
   item: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f8f9fa",
-    borderRadius: 10,
-    padding: 10,
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  thumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+  },
+  textContainer: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  typeText: {
+    fontWeight: "600",
+    color: "#2c3e50",
+    fontSize: 14,
+  },
+  valueText: {
+    color: "#7f8c8d",
+    fontSize: 14,
+    marginTop: 2,
   },
   date: {
     fontSize: 12,
-    color: "#888",
-    marginTop: 2,
+    color: "#95a5a6",
+    marginTop: 4,
+  },
+  favoriteButton: {
+    padding: 8,
+  },
+  emptyText: {
+    color: "#bdc3c7",
+    textAlign: "center",
+    marginTop: 40,
+    fontSize: 16,
   },
 });
 
