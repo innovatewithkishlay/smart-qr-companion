@@ -92,9 +92,12 @@ const GenerateScreen = () => {
             base64: true,
           }
         );
+        if (!manipulated.base64) {
+          Alert.alert("Error", "Failed to process image");
+          return;
+        }
         const base64 = manipulated.base64;
         const sizeKB = (base64.length * 0.75) / 1024;
-
         if (sizeKB > MAX_IMAGE_SIZE_KB) {
           Alert.alert(
             "Image Too Large",
@@ -102,7 +105,6 @@ const GenerateScreen = () => {
           );
           return;
         }
-
         setSelectedImage(manipulated.uri);
         setImageBase64(`data:image/jpeg;base64,${base64}`);
       }
@@ -135,12 +137,9 @@ const GenerateScreen = () => {
         Alert.alert("Error", "Please select an image first");
         return;
       }
-
       const value = buildQRValue();
       if (!value) return;
-
       setQrValue(value);
-
       const newItem: QrHistoryItem = {
         id: Date.now().toString(),
         type: qrType,
@@ -160,10 +159,8 @@ const GenerateScreen = () => {
     try {
       const { status } = await MediaLibrary.requestPermissionsAsync();
       if (status !== "granted") throw new Error("Permission denied");
-
       const uri = await viewShotRef.current?.capture?.();
       if (!uri) throw new Error("Capture failed");
-
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert("Success", "QR code saved to gallery!");
     } catch (error) {
@@ -197,7 +194,6 @@ const GenerateScreen = () => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Generate QR Code</Text>
-
       <View style={styles.typeSelector}>
         {QR_TYPES.map((type) => (
           <TouchableOpacity
@@ -219,7 +215,6 @@ const GenerateScreen = () => {
           </TouchableOpacity>
         ))}
       </View>
-
       {(qrType === "url" || qrType === "text") && (
         <TextInput
           style={styles.input}
@@ -230,7 +225,6 @@ const GenerateScreen = () => {
           autoCorrect={false}
         />
       )}
-
       {qrType === "wifi" && (
         <>
           <TextInput
@@ -268,7 +262,6 @@ const GenerateScreen = () => {
           </View>
         </>
       )}
-
       {qrType === "vcard" && (
         <>
           <TextInput
@@ -293,7 +286,6 @@ const GenerateScreen = () => {
           />
         </>
       )}
-
       {qrType === "image" && (
         <>
           <TouchableOpacity style={styles.button} onPress={pickImage}>
@@ -310,7 +302,6 @@ const GenerateScreen = () => {
           )}
         </>
       )}
-
       <Text style={styles.sectionLabel}>QR Code Color</Text>
       <View style={styles.colorRow}>
         {COLOR_PRESETS.map((color) => (
@@ -325,7 +316,6 @@ const GenerateScreen = () => {
           />
         ))}
       </View>
-
       <Text style={styles.sectionLabel}>Background Color</Text>
       <View style={styles.colorRow}>
         {BG_COLOR_PRESETS.map((color) => (
@@ -340,7 +330,6 @@ const GenerateScreen = () => {
           />
         ))}
       </View>
-
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerate}
@@ -354,7 +343,6 @@ const GenerateScreen = () => {
       >
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
-
       <ViewShot
         ref={viewShotRef}
         options={{ format: "png", quality: 1 }}
@@ -375,7 +363,6 @@ const GenerateScreen = () => {
           )}
         </View>
       </ViewShot>
-
       {qrValue && (
         <View style={styles.actionRow}>
           <TouchableOpacity
