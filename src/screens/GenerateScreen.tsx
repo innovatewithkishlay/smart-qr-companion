@@ -42,6 +42,7 @@ const BG_COLOR_PRESETS = [
   "#e0f7fa",
   "#ffcccb",
 ];
+const MAX_IMAGE_SIZE_KB = 100;
 
 const GenerateScreen = () => {
   const [qrType, setQrType] = useState("url");
@@ -71,79 +72,94 @@ const GenerateScreen = () => {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      base64: true,
-      quality: 0.7,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      setSelectedImage(uri);
-      const base64 = await FileSystem.readAsStringAsync(uri, {
-        encoding: FileSystem.EncodingType.Base64,
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.5,
+        base64: true,
+        maxWidth: 512,
+        maxHeight: 512,
       });
-      const base64String = `data:image/jpeg;base64,${base64}`;
-      setImageBase64(base64String);
+
+      if (!result.canceled && result.assets[0].base64) {
+        const base64 = result.assets[0].base64;
+        const sizeKB = (base64.length * 0.75) / 1024;
+
+        if (sizeKB > MAX_IMAGE_SIZE_KB) {
+          Alert.alert(
+            "Image Too Large",
+            `Please select an image smaller than ${MAX_IMAGE_SIZE_KB}KB`
+          );
+          return;
+        }
+
+        setSelectedImage(result.assets[0].uri);
+        setImageBase64(`data:image/jpeg;base64,${base64}`);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick image");
     }
   };
 
   const buildQRValue = () => {
     if (qrType === "url" || qrType === "text") return input;
-    if (qrType === "wifi") {
+    if (qrType === "wifi")
       return `WIFI:T:${wifiType};S:${wifiSSID};P:${wifiPassword};;`;
-    }
     if (qrType === "vcard") {
       return [
         "BEGIN:VCARD",
         "VERSION:3.0",
         `FN:${vcardName}`,
-        vcardPhone ? `TEL:${vcardPhone}` : "",
-        vcardEmail ? `EMAIL:${vcardEmail}` : "",
+        ...(vcardPhone ? [`TEL:${vcardPhone}`] : []),
+        ...(vcardEmail ? [`EMAIL:${vcardEmail}`] : []),
         "END:VCARD",
-      ]
-        .filter(Boolean)
-        .join("\n");
+      ].join("\n");
     }
-    if (qrType === "image") {
-      return imageBase64;
-    }
+    if (qrType === "image") return imageBase64;
     return "";
   };
 
   const handleGenerate = async () => {
-    const value = buildQRValue();
-    if (!value) return;
+    try {
+      if (qrType === "image" && !imageBase64) {
+        Alert.alert("Error", "Please select an image first");
+        return;
+      }
 
-    setQrValue(value);
+      const value = buildQRValue();
+      if (!value) return;
 
-    const newItem: QrHistoryItem = {
-      id: Date.now().toString(),
-      type: qrType,
-      value,
-      color: qrColor,
-      bgColor,
-      date: Date.now(),
-      favorite: false,
-    };
-    await addToHistory(newItem);
+      setQrValue(value);
+
+      const newItem: QrHistoryItem = {
+        id: Date.now().toString(),
+        type: qrType,
+        value,
+        color: qrColor,
+        bgColor,
+        date: Date.now(),
+        favorite: false,
+      };
+      await addToHistory(newItem);
+    } catch (error) {
+      Alert.alert("Error", "Failed to generate QR code");
+    }
   };
 
   const saveQrToGallery = async () => {
     try {
-      const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          "Permission required",
-          "Please grant media library permissions to save images."
-        );
-        return;
-      }
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== "granted") throw new Error("Permission denied");
+
       const uri = await viewShotRef.current?.capture?.();
       if (!uri) throw new Error("Capture failed");
+
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert("Success", "QR code saved to gallery!");
     } catch (error) {
-      Alert.alert("Error", "Could not save QR code.");
+      Alert.alert("Error", "Could not save QR code");
     }
   };
 
@@ -153,11 +169,12 @@ const GenerateScreen = () => {
       if (!uri) throw new Error("Capture failed");
       await Sharing.shareAsync(uri);
     } catch (error) {
-      Alert.alert("Error", "Could not share QR code.");
+      Alert.alert("Error", "Could not share QR code");
     }
   };
 
   React.useEffect(() => {
+    // Reset all fields when QR type changes
     setInput("");
     setWifiSSID("");
     setWifiPassword("");
@@ -165,14 +182,16 @@ const GenerateScreen = () => {
     setVcardName("");
     setVcardPhone("");
     setVcardEmail("");
-    setQrValue("");
     setSelectedImage("");
     setImageBase64("");
+    setQrValue("");
   }, [qrType]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Generate QR Code</Text>
+
+      {/* Type Selector */}
       <View style={styles.typeSelector}>
         {QR_TYPES.map((type) => (
           <TouchableOpacity
@@ -195,6 +214,7 @@ const GenerateScreen = () => {
         ))}
       </View>
 
+      {/* Input Fields */}
       {(qrType === "url" || qrType === "text") && (
         <TextInput
           style={styles.input}
@@ -276,21 +296,17 @@ const GenerateScreen = () => {
               {selectedImage ? "Change Image" : "Pick Image"}
             </Text>
           </TouchableOpacity>
-          {selectedImage ? (
+          {selectedImage && (
             <Image
               source={{ uri: selectedImage }}
-              style={{
-                width: 200,
-                height: 200,
-                marginVertical: 8,
-                borderRadius: 12,
-              }}
+              style={styles.imagePreview}
               resizeMode="cover"
             />
-          ) : null}
+          )}
         </>
       )}
 
+      {/* Color Customization */}
       <Text style={styles.sectionLabel}>QR Code Color</Text>
       <View style={styles.colorRow}>
         {COLOR_PRESETS.map((color) => (
@@ -305,6 +321,7 @@ const GenerateScreen = () => {
           />
         ))}
       </View>
+
       <Text style={styles.sectionLabel}>Background Color</Text>
       <View style={styles.colorRow}>
         {BG_COLOR_PRESETS.map((color) => (
@@ -319,27 +336,26 @@ const GenerateScreen = () => {
           />
         ))}
       </View>
+
+      {/* Generate Button */}
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerate}
         disabled={
-          ((qrType === "url" || qrType === "text") && !input.trim()) ||
-          (qrType === "wifi" && !wifiSSID.trim()) ||
-          (qrType === "vcard" &&
-            (!vcardName.trim() ||
-              (!vcardPhone.trim() && !vcardEmail.trim()))) ||
-          (qrType === "image" && !selectedImage)
+          (qrType === "url" && !input.trim()) ||
+          (qrType === "text" && !input.trim()) ||
+          (qrType === "wifi" && (!wifiSSID.trim() || !wifiPassword.trim())) ||
+          (qrType === "vcard" && !vcardName.trim()) ||
+          (qrType === "image" && !imageBase64)
         }
       >
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
+
+      {/* QR Preview */}
       <ViewShot
         ref={viewShotRef}
-        options={{
-          format: "png",
-          quality: 1.0,
-          result: "tmpfile",
-        }}
+        options={{ format: "png", quality: 1 }}
         style={styles.qrContainer}
       >
         <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
@@ -357,7 +373,9 @@ const GenerateScreen = () => {
           )}
         </View>
       </ViewShot>
-      {qrValue ? (
+
+      {/* Save/Share Buttons */}
+      {qrValue && (
         <View style={styles.actionRow}>
           <TouchableOpacity
             style={styles.actionButton}
@@ -369,7 +387,7 @@ const GenerateScreen = () => {
             <Text style={styles.actionButtonText}>Share QR Code</Text>
           </TouchableOpacity>
         </View>
-      ) : null}
+      )}
     </ScrollView>
   );
 };
@@ -381,8 +399,15 @@ const styles = StyleSheet.create({
     padding: 24,
     backgroundColor: "#fff",
   },
-  title: { fontSize: 24, fontWeight: "bold", marginVertical: 16 },
-  typeSelector: { flexDirection: "row", marginBottom: 12 },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginVertical: 16,
+  },
+  typeSelector: {
+    flexDirection: "row",
+    marginBottom: 12,
+  },
   typeButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -414,7 +439,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     alignSelf: "flex-start",
   },
-  colorRow: { flexDirection: "row", marginBottom: 8 },
+  colorRow: {
+    flexDirection: "row",
+    marginBottom: 8,
+  },
   colorSwatch: {
     width: 32,
     height: 32,
@@ -435,7 +463,17 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
   },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  imagePreview: {
+    width: 200,
+    height: 200,
+    marginVertical: 8,
+    borderRadius: 12,
+  },
   qrContainer: {
     marginTop: 32,
     alignItems: "center",
@@ -450,7 +488,10 @@ const styles = StyleSheet.create({
     minHeight: 240,
     minWidth: 240,
   },
-  placeholder: { color: "#aaa", fontSize: 16 },
+  placeholder: {
+    color: "#aaa",
+    fontSize: 16,
+  },
   actionRow: {
     flexDirection: "row",
     gap: 12,
