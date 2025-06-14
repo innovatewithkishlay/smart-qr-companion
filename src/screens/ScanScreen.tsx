@@ -131,7 +131,7 @@ const ScanScreen = () => {
   if (hasPermission === false) {
     return (
       <View style={styles.centerContainer}>
-        <Ionicons name="camera-off" size={40} color="#ff4444" />
+        <Ionicons name="camera-outline" size={40} color="#ff4444" />
         <Text style={styles.permissionText}>Camera access denied</Text>
         <TouchableOpacity
           style={styles.permissionButton}
@@ -149,11 +149,7 @@ const ScanScreen = () => {
         <Camera
           style={StyleSheet.absoluteFill}
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          flashMode={
-            flashOn
-              ? Camera.Constants.FlashMode.torch
-              : Camera.Constants.FlashMode.off
-          }
+          flashMode={flashOn ? "torch" : "off"}
           ratio="16:9"
         >
           <View style={styles.overlay}>
