@@ -149,7 +149,11 @@ const ScanScreen = () => {
         <Camera
           style={StyleSheet.absoluteFill}
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          flashMode={flashOn ? "torch" : "off"}
+          flashMode={
+            flashOn
+              ? Camera.Constants.FlashMode.torch
+              : Camera.Constants.FlashMode.off
+          }
           ratio="16:9"
         >
           <View style={styles.overlay}>
