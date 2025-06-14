@@ -4,64 +4,84 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Switch,
   ScrollView,
+  Linking,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../types/navigation";
 
-const settings = [
-  {
-    icon: "color-palette-outline",
-    label: "Theme",
-    value: "Light",
-    onPress: () => {},
-  },
-  {
-    icon: "lock-closed-outline",
-    label: "Privacy Policy",
-    onPress: () => {},
-  },
-  {
-    icon: "information-circle-outline",
-    label: "About",
-    onPress: () => {},
-  },
-  {
-    icon: "help-circle-outline",
-    label: "Help & Support",
-    onPress: () => {},
-  },
-];
+const SettingsScreen = () => {
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-const SettingsScreen = () => (
-  <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-    <Text style={styles.title}>Settings</Text>
-    <View style={styles.card}>
-      {settings.map((item, idx) => (
-        <TouchableOpacity
-          key={item.label}
-          style={[
-            styles.row,
-            idx === settings.length - 1 ? { borderBottomWidth: 0 } : {},
-          ]}
-          onPress={item.onPress}
-          activeOpacity={0.7}
-        >
-          <Ionicons name={item.icon as any} size={22} color="#007bff" />
-          <Text style={styles.label}>{item.label}</Text>
-          {item.value && <Text style={styles.value}>{item.value}</Text>}
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color="#bbb"
-            style={{ marginLeft: "auto" }}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
-    <Text style={styles.version}>Smart QR Companion v1.0.0</Text>
-  </ScrollView>
-);
+  const openPrivacyPolicy = () => {
+    Linking.openURL("https://yourwebsite.com/privacy").catch(() =>
+      Alert.alert("Error", "Could not open Privacy Policy.")
+    );
+  };
+
+  const openSupportEmail = () => {
+    Linking.openURL(
+      "mailto:support@yourapp.com?subject=Support%20Request"
+    ).catch(() => Alert.alert("Error", "Could not open mail client."));
+  };
+
+  const settings = [
+    {
+      icon: "color-palette-outline",
+      label: "Theme",
+      value: "Light",
+      onPress: () => navigation.navigate("ThemeSettings"),
+    },
+    {
+      icon: "lock-closed-outline",
+      label: "Privacy Policy",
+      onPress: openPrivacyPolicy,
+    },
+    {
+      icon: "information-circle-outline",
+      label: "About",
+      onPress: () => navigation.navigate("AboutScreen"),
+    },
+    {
+      icon: "help-circle-outline",
+      label: "Help & Support",
+      onPress: openSupportEmail,
+    },
+  ];
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.title}>Settings</Text>
+      <View style={styles.card}>
+        {settings.map((item, idx) => (
+          <TouchableOpacity
+            key={item.label}
+            style={[
+              styles.row,
+              idx === settings.length - 1 ? { borderBottomWidth: 0 } : {},
+            ]}
+            onPress={item.onPress}
+            activeOpacity={0.7}
+          >
+            <Ionicons name={item.icon as any} size={22} color="#007bff" />
+            <Text style={styles.label}>{item.label}</Text>
+            {item.value && <Text style={styles.value}>{item.value}</Text>}
+            <Ionicons
+              name="chevron-forward"
+              size={20}
+              color="#bbb"
+              style={{ marginLeft: "auto" }}
+            />
+          </TouchableOpacity>
+        ))}
+      </View>
+      <Text style={styles.version}>Smart QR Companion v1.0.0</Text>
+    </ScrollView>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
