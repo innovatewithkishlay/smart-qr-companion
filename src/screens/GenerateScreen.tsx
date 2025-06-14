@@ -7,11 +7,14 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  Image,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 import { QrHistoryItem } from "../types/QrHistory";
 import { addToHistory } from "../utils/history";
 
@@ -20,6 +23,7 @@ const QR_TYPES = [
   { label: "Text", value: "text" },
   { label: "Wi-Fi", value: "wifi" },
   { label: "Contact", value: "vcard" },
+  { label: "Image", value: "image" },
 ];
 
 const COLOR_PRESETS = [
@@ -48,6 +52,8 @@ const GenerateScreen = () => {
   const [vcardName, setVcardName] = useState("");
   const [vcardPhone, setVcardPhone] = useState("");
   const [vcardEmail, setVcardEmail] = useState("");
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [imageBase64, setImageBase64] = useState<string>("");
   const [qrValue, setQrValue] = useState("");
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
@@ -64,21 +70,59 @@ const GenerateScreen = () => {
     }
   };
 
-  const buildQRValue = () => {
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true,
+      quality: 0.7,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      setSelectedImage(uri);
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      setImageBase64(`data:image/jpeg;base64,${base64}`);
+      return `data:image/jpeg;base64,${base64}`;
+    }
+    return "";
+  };
+
+  const buildQRValue = async () => {
     if (qrType === "url" || qrType === "text") return input;
     if (qrType === "wifi") {
       return `WIFI:T:${wifiType};S:${wifiSSID};P:${wifiPassword};;`;
     }
     if (qrType === "vcard") {
-      return `BEGIN:VCARD\nVERSION:3.0\nFN:${vcardName}\nTEL:${vcardPhone}\nEMAIL:${vcardEmail}\nEND:VCARD`;
+      return [
+        "BEGIN:VCARD",
+        "VERSION:3.0",
+        `FN:${vcardName}`,
+        vcardPhone ? `TEL:${vcardPhone}` : "",
+        vcardEmail ? `EMAIL:${vcardEmail}` : "",
+        "END:VCARD",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    }
+    if (qrType === "image") {
+      if (imageBase64) return imageBase64;
+      const base64 = await pickImage();
+      return base64;
     }
     return "";
   };
 
   const handleGenerate = async () => {
-    const value = buildQRValue();
-    setQrValue(value);
-
+    let value = "";
+    if (qrType === "image") {
+      value = await buildQRValue();
+      if (!value) return;
+      setQrValue(value);
+    } else {
+      value = await buildQRValue();
+      setQrValue(value);
+    }
     const newItem: QrHistoryItem = {
       id: Date.now().toString(),
       type: qrType,
@@ -129,6 +173,8 @@ const GenerateScreen = () => {
     setVcardPhone("");
     setVcardEmail("");
     setQrValue("");
+    setSelectedImage("");
+    setImageBase64("");
   }, [qrType]);
 
   return (
@@ -230,6 +276,28 @@ const GenerateScreen = () => {
         </>
       )}
 
+      {qrType === "image" && (
+        <>
+          <TouchableOpacity style={styles.button} onPress={pickImage}>
+            <Text style={styles.buttonText}>
+              {selectedImage ? "Change Image" : "Pick Image"}
+            </Text>
+          </TouchableOpacity>
+          {selectedImage ? (
+            <Image
+              source={{ uri: selectedImage }}
+              style={{
+                width: 200,
+                height: 200,
+                marginVertical: 8,
+                borderRadius: 12,
+              }}
+              resizeMode="cover"
+            />
+          ) : null}
+        </>
+      )}
+
       <Text style={styles.sectionLabel}>QR Code Color</Text>
       <View style={styles.colorRow}>
         {COLOR_PRESETS.map((color) => (
@@ -265,7 +333,9 @@ const GenerateScreen = () => {
           ((qrType === "url" || qrType === "text") && !input.trim()) ||
           (qrType === "wifi" && !wifiSSID.trim()) ||
           (qrType === "vcard" &&
-            (!vcardName.trim() || (!vcardPhone.trim() && !vcardEmail.trim())))
+            (!vcardName.trim() ||
+              (!vcardPhone.trim() && !vcardEmail.trim()))) ||
+          (qrType === "image" && !selectedImage)
         }
       >
         <Text style={styles.buttonText}>Generate</Text>
