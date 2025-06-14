@@ -5,40 +5,22 @@ import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { RouteProp, useRoute } from "@react-navigation/native";
-
-// Adjust this type according to your navigator's param list
-type QrDetailScreenRouteProp = RouteProp<
-  {
-    QrDetail: {
-      value: string;
-      color: string;
-      bgColor: string;
-      type: string;
-    };
-  },
-  "QrDetail"
->;
+import { RootStackParamList } from "../types/navigation";
 
 const QrDetailScreen = () => {
-  const route = useRoute<QrDetailScreenRouteProp>();
+  const route = useRoute<RouteProp<RootStackParamList, "QrDetail">>();
   const { value, color, bgColor, type } = route.params;
   const viewShotRef = useRef<ViewShot>(null);
 
   const saveQrToGallery = async () => {
     try {
       const permission = await MediaLibrary.requestPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          "Permission required",
-          "Please grant media library permissions to save images."
-        );
-        return;
-      }
+      if (!permission.granted) return;
       const uri = await viewShotRef.current?.capture?.();
-      if (!uri) throw new Error("Capture failed");
+      if (!uri) return;
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert("Success", "QR code saved to gallery!");
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not save QR code.");
     }
   };
@@ -46,9 +28,9 @@ const QrDetailScreen = () => {
   const shareQrCode = async () => {
     try {
       const uri = await viewShotRef.current?.capture?.();
-      if (!uri) throw new Error("Capture failed");
+      if (!uri) return;
       await Sharing.shareAsync(uri);
-    } catch (error) {
+    } catch {
       Alert.alert("Error", "Could not share QR code.");
     }
   };
@@ -58,11 +40,7 @@ const QrDetailScreen = () => {
       <Text style={styles.title}>{type.toUpperCase()} QR Code</Text>
       <ViewShot
         ref={viewShotRef}
-        options={{
-          format: "png",
-          quality: 1.0,
-          result: "tmpfile",
-        }}
+        options={{ format: "png", quality: 1.0 }}
         style={styles.qrContainer}
       >
         <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
@@ -98,34 +76,17 @@ const styles = StyleSheet.create({
     marginTop: 32,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "transparent",
   },
-  qrWrapper: {
-    padding: 20,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 240,
-    minWidth: 240,
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 20,
-    width: "100%",
-  },
+  qrWrapper: { padding: 20, borderRadius: 12, minHeight: 240, minWidth: 240 },
+  actionRow: { flexDirection: "row", gap: 12, marginTop: 20, width: "100%" },
   actionButton: {
     flex: 1,
     backgroundColor: "#28a745",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
-    marginHorizontal: 4,
   },
-  actionButtonText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
+  actionButtonText: { color: "#fff", fontWeight: "bold" },
 });
 
 export default QrDetailScreen;
