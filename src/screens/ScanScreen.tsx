@@ -8,7 +8,7 @@ import {
   Linking,
   Clipboard,
 } from "react-native";
-import { BarCodeScanner } from "expo-barcode-scanner";
+import { Camera } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { addToHistory } from "../utils/history";
@@ -18,18 +18,16 @@ const ScanScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
-  const [scannedData, setScannedData] = useState<string>("");
-  const [scannedType, setScannedType] = useState<string>("");
+  const [scannedData, setScannedData] = useState("");
+  const [scannedType, setScannedType] = useState("");
   const isFocused = useIsFocused();
 
   useEffect(() => {
-    getBarCodeScannerPermissions();
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === "granted");
+    })();
   }, []);
-
-  const getBarCodeScannerPermissions = async () => {
-    const { status } = await BarCodeScanner.requestPermissionsAsync();
-    setHasPermission(status === "granted");
-  };
 
   const detectQRType = (data: string): string => {
     if (data.startsWith("http://") || data.startsWith("https://")) return "url";
@@ -61,7 +59,6 @@ const ScanScreen = () => {
 
   const getSmartActions = () => {
     const actions = [];
-
     switch (scannedType) {
       case "url":
         actions.push({
@@ -72,7 +69,7 @@ const ScanScreen = () => {
         break;
       case "wifi":
         actions.push({
-          title: "View Wi-Fi Details",
+          title: "View Details",
           icon: "wifi-outline",
           action: () => Alert.alert("Wi-Fi Details", scannedData),
         });
@@ -81,7 +78,7 @@ const ScanScreen = () => {
         actions.push({
           title: "View Contact",
           icon: "person-outline",
-          action: () => Alert.alert("Contact Details", scannedData),
+          action: () => Alert.alert("Contact Info", scannedData),
         });
         break;
       case "phone":
@@ -93,20 +90,19 @@ const ScanScreen = () => {
         break;
       case "email":
         actions.push({
-          title: "Send Email",
+          title: "Email",
           icon: "mail-outline",
           action: () => Linking.openURL(scannedData),
         });
         break;
       case "sms":
         actions.push({
-          title: "Send SMS",
+          title: "SMS",
           icon: "chatbox-outline",
           action: () => Linking.openURL(scannedData),
         });
         break;
     }
-
     actions.push({
       title: "Copy Text",
       icon: "copy-outline",
@@ -115,7 +111,6 @@ const ScanScreen = () => {
         Alert.alert("Copied", "Text copied to clipboard");
       },
     });
-
     return actions;
   };
 
@@ -128,9 +123,7 @@ const ScanScreen = () => {
   if (hasPermission === null) {
     return (
       <View style={styles.centerContainer}>
-        <Text style={styles.permissionText}>
-          Requesting camera permission...
-        </Text>
+        <Text style={styles.permissionText}>Requesting camera access...</Text>
       </View>
     );
   }
@@ -138,13 +131,13 @@ const ScanScreen = () => {
   if (hasPermission === false) {
     return (
       <View style={styles.centerContainer}>
-        <Ionicons name="camera-outline" size={80} color="#ccc" />
-        <Text style={styles.permissionText}>No access to camera</Text>
+        <Ionicons name="camera-off" size={40} color="#ff4444" />
+        <Text style={styles.permissionText}>Camera access denied</Text>
         <TouchableOpacity
           style={styles.permissionButton}
-          onPress={getBarCodeScannerPermissions}
+          onPress={() => Camera.requestCameraPermissionsAsync()}
         >
-          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+          <Text style={styles.permissionButtonText}>Enable Camera</Text>
         </TouchableOpacity>
       </View>
     );
@@ -153,67 +146,78 @@ const ScanScreen = () => {
   return (
     <View style={styles.container}>
       {isFocused && (
-        <BarCodeScanner
+        <Camera
+          style={StyleSheet.absoluteFill}
           onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-          style={StyleSheet.absoluteFillObject}
-          flashMode={flashOn ? "torch" : "off"}
-        />
-      )}
-
-      <View style={styles.overlay}>
-        <View style={styles.topSection}>
-          <Text style={styles.scanTitle}>Scan QR Code</Text>
-          <TouchableOpacity
-            style={styles.flashButton}
-            onPress={() => setFlashOn(!flashOn)}
-          >
-            <Ionicons
-              name={flashOn ? "flash" : "flash-outline"}
-              size={28}
-              color="#fff"
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.scanFrame}>
-          <View style={[styles.corner, styles.topLeft]} />
-          <View style={[styles.corner, styles.topRight]} />
-          <View style={[styles.corner, styles.bottomLeft]} />
-          <View style={[styles.corner, styles.bottomRight]} />
-        </View>
-
-        {scanned && (
-          <View style={styles.resultContainer}>
-            <View style={styles.resultHeader}>
-              <Text style={styles.resultType}>{scannedType.toUpperCase()}</Text>
-              <TouchableOpacity onPress={resetScanner}>
-                <Ionicons name="close" size={24} color="#fff" />
+          flashMode={
+            flashOn
+              ? Camera.Constants.FlashMode.torch
+              : Camera.Constants.FlashMode.off
+          }
+          ratio="16:9"
+        >
+          <View style={styles.overlay}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Scan QR Code</Text>
+              <TouchableOpacity
+                style={styles.flashButton}
+                onPress={() => setFlashOn(!flashOn)}
+              >
+                <Ionicons
+                  name={flashOn ? "flash" : "flash-outline"}
+                  size={28}
+                  color="#fff"
+                />
               </TouchableOpacity>
             </View>
-            <Text style={styles.resultText} numberOfLines={3}>
-              {scannedData}
-            </Text>
-            <View style={styles.actionButtons}>
-              {getSmartActions().map((action, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.actionButton}
-                  onPress={action.action}
-                >
-                  <Ionicons name={action.icon as any} size={20} color="#fff" />
-                  <Text style={styles.actionButtonText}>{action.title}</Text>
-                </TouchableOpacity>
-              ))}
+
+            <View style={styles.scanFrame}>
+              <View style={[styles.corner, styles.topLeft]} />
+              <View style={[styles.corner, styles.topRight]} />
+              <View style={[styles.corner, styles.bottomLeft]} />
+              <View style={[styles.corner, styles.bottomRight]} />
             </View>
-            <TouchableOpacity
-              style={styles.scanAgainButton}
-              onPress={resetScanner}
-            >
-              <Text style={styles.scanAgainText}>Scan Again</Text>
-            </TouchableOpacity>
+
+            {scanned && (
+              <View style={styles.resultPanel}>
+                <View style={styles.resultHeader}>
+                  <Text style={styles.resultType}>
+                    {scannedType.toUpperCase()}
+                  </Text>
+                  <TouchableOpacity onPress={resetScanner}>
+                    <Ionicons name="close" size={24} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.resultText} numberOfLines={3}>
+                  {scannedData}
+                </Text>
+                <View style={styles.actionRow}>
+                  {getSmartActions().map((action, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={styles.actionButton}
+                      onPress={action.action}
+                    >
+                      <Ionicons
+                        name={action.icon as any}
+                        size={20}
+                        color="#fff"
+                      />
+                      <Text style={styles.actionText}>{action.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  style={styles.scanAgainButton}
+                  onPress={resetScanner}
+                >
+                  <Text style={styles.scanAgainText}>Scan Again</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
-        )}
-      </View>
+        </Camera>
+      )}
     </View>
   );
 };
@@ -232,14 +236,14 @@ const styles = StyleSheet.create({
   },
   permissionText: {
     fontSize: 18,
-    textAlign: "center",
     color: "#666",
     marginVertical: 20,
+    textAlign: "center",
   },
   permissionButton: {
     backgroundColor: "#007bff",
-    paddingHorizontal: 24,
     paddingVertical: 12,
+    paddingHorizontal: 24,
     borderRadius: 8,
   },
   permissionButtonText: {
@@ -251,27 +255,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "space-between",
   },
-  topSection: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 60,
-    paddingHorizontal: 20,
+    padding: 20,
+    paddingTop: 40,
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
-  scanTitle: {
-    fontSize: 24,
+  title: {
     color: "#fff",
+    fontSize: 24,
     fontWeight: "bold",
   },
   flashButton: {
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 12,
-    borderRadius: 50,
+    padding: 10,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.2)",
   },
   scanFrame: {
-    alignSelf: "center",
     width: 250,
     height: 250,
+    alignSelf: "center",
     position: "relative",
   },
   corner: {
@@ -304,11 +309,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 4,
     borderRightWidth: 4,
   },
-  resultContainer: {
-    backgroundColor: "rgba(0,0,0,0.9)",
+  resultPanel: {
     margin: 20,
+    padding: 16,
     borderRadius: 12,
-    padding: 20,
+    backgroundColor: "rgba(0,0,0,0.8)",
   },
   resultHeader: {
     flexDirection: "row",
@@ -325,9 +330,8 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 14,
     marginBottom: 16,
-    lineHeight: 20,
   },
-  actionButtons: {
+  actionRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
@@ -336,13 +340,13 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#007bff",
-    paddingHorizontal: 12,
+    backgroundColor: "rgba(255,255,255,0.1)",
     paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 20,
     gap: 6,
   },
-  actionButtonText: {
+  actionText: {
     color: "#fff",
     fontSize: 12,
     fontWeight: "bold",
