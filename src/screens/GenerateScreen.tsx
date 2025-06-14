@@ -9,7 +9,7 @@ import {
   Alert,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import { captureRef } from "react-native-view-shot";
+import ViewShot from "react-native-view-shot";
 import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 
@@ -41,7 +41,7 @@ const GenerateScreen = () => {
   const [qrValue, setQrValue] = useState("");
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
-  const qrRef = useRef(null);
+  const viewShotRef = useRef<ViewShot>(null);
 
   const getPlaceholder = () => {
     switch (qrType) {
@@ -66,10 +66,8 @@ const GenerateScreen = () => {
         );
         return;
       }
-      const uri = await captureRef(qrRef, {
-        format: "png",
-        quality: 1,
-      });
+      const uri = await viewShotRef.current?.capture?.();
+      if (!uri) throw new Error("Capture failed");
       await MediaLibrary.saveToLibraryAsync(uri);
       Alert.alert("Success", "QR code saved to gallery!");
     } catch (error) {
@@ -79,10 +77,8 @@ const GenerateScreen = () => {
 
   const shareQrCode = async () => {
     try {
-      const uri = await captureRef(qrRef, {
-        format: "png",
-        quality: 1,
-      });
+      const uri = await viewShotRef.current?.capture?.();
+      if (!uri) throw new Error("Capture failed");
       await Sharing.shareAsync(uri);
     } catch (error) {
       Alert.alert("Error", "Could not share QR code.");
@@ -160,18 +156,30 @@ const GenerateScreen = () => {
       >
         <Text style={styles.buttonText}>Generate</Text>
       </TouchableOpacity>
-      <View style={styles.qrContainer} ref={qrRef}>
-        {qrValue ? (
-          <QRCode
-            value={qrValue}
-            size={200}
-            color={qrColor}
-            backgroundColor={bgColor}
-          />
-        ) : (
-          <Text style={styles.placeholder}>Your QR code will appear here</Text>
-        )}
-      </View>
+      <ViewShot
+        ref={viewShotRef}
+        options={{
+          format: "png",
+          quality: 1.0,
+          result: "tmpfile",
+        }}
+        style={styles.qrContainer}
+      >
+        <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
+          {qrValue ? (
+            <QRCode
+              value={qrValue}
+              size={200}
+              color={qrColor}
+              backgroundColor={bgColor}
+            />
+          ) : (
+            <Text style={styles.placeholder}>
+              Your QR code will appear here
+            </Text>
+          )}
+        </View>
+      </ViewShot>
       {qrValue ? (
         <View style={styles.actionRow}>
           <TouchableOpacity
@@ -255,11 +263,15 @@ const styles = StyleSheet.create({
     marginTop: 32,
     alignItems: "center",
     justifyContent: "center",
-    height: 220,
-    width: "100%",
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "transparent",
+  },
+  qrWrapper: {
+    padding: 20,
     borderRadius: 12,
-    padding: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 240,
+    minWidth: 240,
   },
   placeholder: { color: "#aaa", fontSize: 16 },
   actionRow: {
@@ -274,6 +286,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
+    marginHorizontal: 4,
   },
   actionButtonText: {
     color: "#fff",
