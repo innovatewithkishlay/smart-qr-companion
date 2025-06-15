@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import OnboardingScreen from "./screens/OnboardingScreen";
+import OnboardingScreen from "./src/screens/OnboardingScreen";
 import AppNavigator from "./src/navigation/AppNavigator";
 
 const App = () => {

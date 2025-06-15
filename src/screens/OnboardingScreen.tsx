@@ -23,35 +23,35 @@ const OnboardingScreen = ({ onDone }) => (
     pages={[
       {
         backgroundColor: "#fff",
-        image: <AnimatedStep source={require("../assets/lottie-qr.json")} />,
+        image: <AnimatedStep source={require("../../assets/lottie-qr.json")} />,
         title: "Generate QR Codes",
         subtitle:
           "Create QR codes for links, text, Wi-Fi, contacts, and images.",
       },
-      {
-        backgroundColor: "#f8f9fa",
-        image: <AnimatedStep source={require("../assets/lottie-scan.json")} />,
-        title: "Scan Instantly",
-        subtitle: "Scan any QR code and get smart actions for each type.",
-      },
-      {
-        backgroundColor: "#e9f7ef",
-        image: (
-          <AnimatedStep source={require("../assets/lottie-history.json")} />
-        ),
-        title: "History & Favorites",
-        subtitle:
-          "Access your QR code history and mark favorites for quick access.",
-      },
-      {
-        backgroundColor: "#e3e0f7",
-        image: (
-          <AnimatedStep source={require("../assets/lottie-settings.json")} />
-        ),
-        title: "Settings & Customization",
-        subtitle:
-          "Personalize QR colors, backgrounds, and manage your app settings.",
-      },
+      //   {
+      //     backgroundColor: "#f8f9fa",
+      //     image: <AnimatedStep source={require("../assets/lottie-scan.json")} />,
+      //     title: "Scan Instantly",
+      //     subtitle: "Scan any QR code and get smart actions for each type.",
+      //   },
+      //   {
+      //     backgroundColor: "#e9f7ef",
+      //     image: (
+      //       <AnimatedStep source={require("../assets/lottie-history.json")} />
+      //     ),
+      //     title: "History & Favorites",
+      //     subtitle:
+      //       "Access your QR code history and mark favorites for quick access.",
+      //   },
+      //   {
+      //     backgroundColor: "#e3e0f7",
+      //     image: (
+      //       <AnimatedStep source={require("../assets/lottie-settings.json")} />
+      //     ),
+      //     title: "Settings & Customization",
+      //     subtitle:
+      //       "Personalize QR colors, backgrounds, and manage your app settings.",
+      //   },
     ]}
     bottomBarHighlight={false}
     titleStyles={{ fontWeight: "bold", fontSize: 24 }}
