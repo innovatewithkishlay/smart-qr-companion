@@ -16,15 +16,9 @@ import { RootStackParamList } from "../types/navigation";
 const SettingsScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
-  const openPrivacyPolicy = () => {
-    Linking.openURL("https://yourwebsite.com/privacy").catch(() =>
-      Alert.alert("Error", "Could not open Privacy Policy.")
-    );
-  };
-
   const openSupportEmail = () => {
     Linking.openURL(
-      "mailto:support@yourapp.com?subject=Support%20Request"
+      "mailto:kishlay141@gmail.com?subject=Support%20Request"
     ).catch(() => Alert.alert("Error", "Could not open mail client."));
   };
 
@@ -34,11 +28,6 @@ const SettingsScreen = () => {
       label: "Theme",
       value: "Light",
       onPress: () => navigation.navigate("ThemeSettings"),
-    },
-    {
-      icon: "lock-closed-outline",
-      label: "Privacy Policy",
-      onPress: openPrivacyPolicy,
     },
     {
       icon: "information-circle-outline",
