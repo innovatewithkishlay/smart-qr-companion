@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../types/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const HistoryScreen = () => {
   const [history, setHistory] = useState<QrHistoryItem[]>([]);
@@ -114,7 +115,7 @@ const HistoryScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Text style={styles.title}>Recent QR Codes</Text>
       <FlatList
         data={history}
@@ -123,8 +124,9 @@ const HistoryScreen = () => {
         ListEmptyComponent={
           <Text style={styles.emptyText}>No history yet.</Text>
         }
+        contentContainerStyle={{ paddingBottom: 24 }}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
