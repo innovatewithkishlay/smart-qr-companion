@@ -7,16 +7,25 @@ import { LinearGradient } from "expo-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
-const GradientStep = ({ icon, colors, title, accent }) => (
-  <LinearGradient colors={colors} style={styles.gradient}>
-    <Animatable.View
-      animation="zoomIn"
-      duration={900}
-      style={styles.iconWrap}
-      useNativeDriver
-    >
-      <Ionicons name={icon} size={width * 0.38} color={accent} />
-    </Animatable.View>
+const FrostedCard = ({ icon, accent, gradient }) => (
+  <View style={styles.frostedWrap}>
+    <LinearGradient colors={gradient} style={styles.gradientBg} />
+    <View style={styles.glassCard}>
+      <Animatable.View
+        animation="zoomIn"
+        duration={900}
+        style={styles.iconWrap}
+        useNativeDriver
+      >
+        <Ionicons name={icon} size={width * 0.33} color={accent} />
+      </Animatable.View>
+    </View>
+  </View>
+);
+
+const AnimatedStep = ({ icon, gradient, title, accent }) => (
+  <View style={styles.stepContainer}>
+    <FrostedCard icon={icon} accent={accent} gradient={gradient} />
     <Animatable.Text
       animation="fadeInDown"
       delay={400}
@@ -26,7 +35,7 @@ const GradientStep = ({ icon, colors, title, accent }) => (
     >
       {title}
     </Animatable.Text>
-  </LinearGradient>
+  </View>
 );
 
 const OnboardingScreen = ({ onDone }) => (
@@ -35,11 +44,11 @@ const OnboardingScreen = ({ onDone }) => (
     onDone={onDone}
     pages={[
       {
-        backgroundColor: "#fff",
+        backgroundColor: "#f3f7fa",
         image: (
-          <GradientStep
+          <AnimatedStep
             icon="qr-code-outline"
-            colors={["#fff", "#e3f2fd"]}
+            gradient={["#e3f2fd", "#fff"]}
             title="Generate QR Codes"
             accent="#1976d2"
           />
@@ -49,11 +58,11 @@ const OnboardingScreen = ({ onDone }) => (
           "Create stylish QR codes for links, text, Wi-Fi, contacts, and images.",
       },
       {
-        backgroundColor: "#fff",
+        backgroundColor: "#f8f9fa",
         image: (
-          <GradientStep
+          <AnimatedStep
             icon="camera-outline"
-            colors={["#f8f9fa", "#e0f7fa"]}
+            gradient={["#e0f7fa", "#f8f9fa"]}
             title="Scan Instantly"
             accent="#00bfae"
           />
@@ -63,11 +72,11 @@ const OnboardingScreen = ({ onDone }) => (
           "Scan any QR code with lightning speed and get smart actions.",
       },
       {
-        backgroundColor: "#fff",
+        backgroundColor: "#fffde7",
         image: (
-          <GradientStep
+          <AnimatedStep
             icon="time-outline"
-            colors={["#fffde7", "#ffe082"]}
+            gradient={["#fffde7", "#ffe082"]}
             title="History & Favorites"
             accent="#ff8f00"
           />
@@ -76,11 +85,11 @@ const OnboardingScreen = ({ onDone }) => (
         subtitle: "Access your QR history and mark favorites for quick access.",
       },
       {
-        backgroundColor: "#fff",
+        backgroundColor: "#ede7f6",
         image: (
-          <GradientStep
+          <AnimatedStep
             icon="settings-outline"
-            colors={["#ede7f6", "#b39ddb"]}
+            gradient={["#ede7f6", "#b39ddb"]}
             title="Personalize Everything"
             accent="#7c4dff"
           />
@@ -91,41 +100,62 @@ const OnboardingScreen = ({ onDone }) => (
       },
     ]}
     bottomBarHighlight={false}
-    titleStyles={{ fontWeight: "bold", fontSize: 26, letterSpacing: 1 }}
+    titleStyles={{ fontWeight: "bold", fontSize: 27, letterSpacing: 1 }}
     subTitleStyles={{
       fontSize: 17,
       color: "#222",
       marginTop: 10,
       lineHeight: 23,
+      fontWeight: "500",
+      textAlign: "center",
     }}
-    containerStyles={{ backgroundColor: "#fff" }}
+    containerStyles={{ backgroundColor: "#f3f7fa" }}
     imageContainerStyles={{ marginBottom: 0, marginTop: 10 }}
   />
 );
 
 const styles = StyleSheet.create({
-  gradient: {
-    width: width,
-    height: width * 0.9,
+  stepContainer: {
     alignItems: "center",
     justifyContent: "center",
+    flex: 1,
+    marginTop: 30,
+  },
+  frostedWrap: {
+    width: width * 0.7,
+    height: width * 0.7,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    marginBottom: 8,
+  },
+  gradientBg: {
+    ...StyleSheet.absoluteFillObject,
     borderRadius: 32,
-    marginTop: 0,
-    marginBottom: 0,
+    opacity: 0.95,
+  },
+  glassCard: {
+    width: width * 0.55,
+    height: width * 0.55,
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
     shadowRadius: 16,
-    elevation: 4,
+    elevation: 6,
+    backdropFilter: "blur(14px)",
   },
   iconWrap: {
-    marginBottom: 18,
-    backgroundColor: "rgba(255,255,255,0.7)",
-    borderRadius: width * 0.22,
+    marginBottom: 0,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    borderRadius: width * 0.2,
     padding: 18,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
   },
@@ -133,7 +163,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
-    marginTop: 5,
+    marginTop: 15,
     letterSpacing: 1,
     textShadowColor: "#fff",
     textShadowOffset: { width: 0, height: 2 },
