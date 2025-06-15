@@ -16,8 +16,10 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../types/navigation";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useTheme } from "../../src/context/ThemeContext";
 
 const HistoryScreen = () => {
+  const { theme } = useTheme();
   const [history, setHistory] = useState<QrHistoryItem[]>([]);
   const [imageUris, setImageUris] = useState<{ [key: string]: string }>({});
   const navigation =
@@ -55,7 +57,7 @@ const HistoryScreen = () => {
 
   const renderItem = ({ item }: { item: QrHistoryItem }) => (
     <TouchableOpacity
-      style={styles.item}
+      style={[styles.item, { backgroundColor: theme.card }]}
       onPress={() =>
         navigation.navigate("QrDetail", {
           ...item,
@@ -93,13 +95,21 @@ const HistoryScreen = () => {
         />
       )}
       <View style={styles.textContainer}>
-        <Text numberOfLines={1} style={styles.typeText}>
+        <Text
+          numberOfLines={1}
+          style={[styles.typeText, { color: theme.text }]}
+        >
           {item.type.toUpperCase()}
         </Text>
-        <Text numberOfLines={1} style={styles.valueText}>
+        <Text
+          numberOfLines={1}
+          style={[styles.valueText, { color: theme.text }]}
+        >
           {item.type === "image" ? "Image QR Code" : item.value}
         </Text>
-        <Text style={styles.date}>{new Date(item.date).toLocaleString()}</Text>
+        <Text style={[styles.date, { color: theme.text + "99" }]}>
+          {new Date(item.date).toLocaleString()}
+        </Text>
       </View>
       <TouchableOpacity
         onPress={() => handleFavorite(item.id)}
@@ -115,14 +125,18 @@ const HistoryScreen = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Recent QR Codes</Text>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <Text style={[styles.title, { color: theme.text }]}>Recent QR Codes</Text>
       <FlatList
         data={history}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         ListEmptyComponent={
-          <Text style={styles.emptyText}>No history yet.</Text>
+          <Text style={[styles.emptyText, { color: theme.text + "99" }]}>
+            No history yet.
+          </Text>
         }
         contentContainerStyle={{ paddingBottom: 24 }}
       />
@@ -134,18 +148,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#ffffff",
   },
   title: {
     fontSize: 22,
     fontWeight: "bold",
     marginBottom: 12,
-    color: "#1a1a1a",
   },
   item: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f8f9fa",
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
@@ -166,24 +177,20 @@ const styles = StyleSheet.create({
   },
   typeText: {
     fontWeight: "600",
-    color: "#2c3e50",
     fontSize: 14,
   },
   valueText: {
-    color: "#7f8c8d",
     fontSize: 14,
     marginTop: 2,
   },
   date: {
     fontSize: 12,
-    color: "#95a5a6",
     marginTop: 4,
   },
   favoriteButton: {
     padding: 8,
   },
   emptyText: {
-    color: "#bdc3c7",
     textAlign: "center",
     marginTop: 40,
     fontSize: 16,
