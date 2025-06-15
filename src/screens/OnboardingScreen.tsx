@@ -3,29 +3,30 @@ import { View, Text, StyleSheet, Dimensions } from "react-native";
 import Onboarding from "react-native-onboarding-swiper";
 import { Ionicons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
+import LinearGradient from "react-native-linear-gradient";
 
 const { width } = Dimensions.get("window");
 
-const AnimatedIconStep = ({ icon, color }) => (
-  <Animatable.View
-    animation="fadeInUp"
-    duration={1000}
-    style={styles.iconContainer}
-    useNativeDriver
-  >
-    <Ionicons name={icon} size={width * 0.38} color={color} />
-  </Animatable.View>
-);
-
-const AnimatedTextStep = ({ text, color }) => (
-  <Animatable.Text
-    animation="fadeIn"
-    duration={1200}
-    style={[styles.animatedText, { color }]}
-    useNativeDriver
-  >
-    {text}
-  </Animatable.Text>
+const GradientStep = ({ icon, colors, title, accent }) => (
+  <LinearGradient colors={colors} style={styles.gradient}>
+    <Animatable.View
+      animation="zoomIn"
+      duration={900}
+      style={styles.iconWrap}
+      useNativeDriver
+    >
+      <Ionicons name={icon} size={width * 0.38} color={accent} />
+    </Animatable.View>
+    <Animatable.Text
+      animation="fadeInDown"
+      delay={400}
+      duration={900}
+      style={[styles.title, { color: accent }]}
+      useNativeDriver
+    >
+      {title}
+    </Animatable.Text>
+  </LinearGradient>
 );
 
 const OnboardingScreen = ({ onDone }) => (
@@ -36,73 +37,107 @@ const OnboardingScreen = ({ onDone }) => (
       {
         backgroundColor: "#fff",
         image: (
-          <View style={styles.stepContainer}>
-            <AnimatedIconStep icon="qr-code-outline" color="#007bff" />
-            <AnimatedTextStep text="Generate QR Codes" color="#007bff" />
-          </View>
+          <GradientStep
+            icon="qr-code-outline"
+            colors={["#fff", "#e3f2fd"]}
+            title="Generate QR Codes"
+            accent="#1976d2"
+          />
         ),
         title: "",
         subtitle:
-          "Create QR codes for links, text, Wi-Fi, contacts, and images.",
+          "Create stylish QR codes for links, text, Wi-Fi, contacts, and images.",
       },
       {
-        backgroundColor: "#f8f9fa",
+        backgroundColor: "#fff",
         image: (
-          <View style={styles.stepContainer}>
-            <AnimatedIconStep icon="camera-outline" color="#28a745" />
-            <AnimatedTextStep text="Scan Instantly" color="#28a745" />
-          </View>
-        ),
-        title: "",
-        subtitle: "Scan any QR code and get smart actions for each type.",
-      },
-      {
-        backgroundColor: "#e9f7ef",
-        image: (
-          <View style={styles.stepContainer}>
-            <AnimatedIconStep icon="time-outline" color="#fd7e14" />
-            <AnimatedTextStep text="History & Favorites" color="#fd7e14" />
-          </View>
+          <GradientStep
+            icon="camera-outline"
+            colors={["#f8f9fa", "#e0f7fa"]}
+            title="Scan Instantly"
+            accent="#00bfae"
+          />
         ),
         title: "",
         subtitle:
-          "Access your QR code history and mark favorites for quick access.",
+          "Scan any QR code with lightning speed and get smart actions.",
       },
       {
-        backgroundColor: "#e3e0f7",
+        backgroundColor: "#fff",
         image: (
-          <View style={styles.stepContainer}>
-            <AnimatedIconStep icon="settings-outline" color="#6f42c1" />
-            <AnimatedTextStep text="Settings & Customization" color="#6f42c1" />
-          </View>
+          <GradientStep
+            icon="time-outline"
+            colors={["#fffde7", "#ffe082"]}
+            title="History & Favorites"
+            accent="#ff8f00"
+          />
+        ),
+        title: "",
+        subtitle: "Access your QR history and mark favorites for quick access.",
+      },
+      {
+        backgroundColor: "#fff",
+        image: (
+          <GradientStep
+            icon="settings-outline"
+            colors={["#ede7f6", "#b39ddb"]}
+            title="Personalize Everything"
+            accent="#7c4dff"
+          />
         ),
         title: "",
         subtitle:
-          "Personalize QR colors, backgrounds, and manage your app settings.",
+          "Customize QR colors, backgrounds, and manage your app settings.",
       },
     ]}
     bottomBarHighlight={false}
-    titleStyles={{ fontWeight: "bold", fontSize: 24 }}
-    subTitleStyles={{ fontSize: 16, color: "#333" }}
+    titleStyles={{ fontWeight: "bold", fontSize: 26, letterSpacing: 1 }}
+    subTitleStyles={{
+      fontSize: 17,
+      color: "#222",
+      marginTop: 10,
+      lineHeight: 23,
+    }}
+    containerStyles={{ backgroundColor: "#fff" }}
+    imageContainerStyles={{ marginBottom: 0, marginTop: 10 }}
   />
 );
 
 const styles = StyleSheet.create({
-  stepContainer: {
+  gradient: {
+    width: width,
+    height: width * 0.9,
     alignItems: "center",
     justifyContent: "center",
-    flex: 1,
-    marginTop: 30,
+    borderRadius: 32,
+    marginTop: 0,
+    marginBottom: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  iconContainer: {
-    marginBottom: 10,
+  iconWrap: {
+    marginBottom: 18,
+    backgroundColor: "rgba(255,255,255,0.7)",
+    borderRadius: width * 0.22,
+    padding: 18,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  animatedText: {
-    fontSize: 24,
+  title: {
+    fontSize: 28,
     fontWeight: "bold",
-    marginTop: 10,
     textAlign: "center",
+    marginTop: 5,
     letterSpacing: 1,
+    textShadowColor: "#fff",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
 });
 
