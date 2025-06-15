@@ -25,6 +25,7 @@ import { QrHistoryItem } from "../types/QrHistory";
 import { addToHistory } from "../utils/history";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 if (
   Platform.OS === "android" &&
@@ -210,295 +211,300 @@ const GenerateScreen = () => {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: theme.background },
-      ]}
-    >
-      {processing && (
-        <View style={styles.loadingOverlay}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={theme.primary} />
-            <Text style={[styles.loadingText, { color: theme.text }]}>
-              Processing Image...
-            </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: theme.background },
+        ]}
+      >
+        {processing && (
+          <View style={styles.loadingOverlay}>
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.primary} />
+              <Text style={[styles.loadingText, { color: theme.text }]}>
+                Processing Image...
+              </Text>
+            </View>
           </View>
-        </View>
-      )}
-      <Text style={[styles.title, { color: theme.primary }]}>
-        Generate QR Code
-      </Text>
-      <View style={styles.typeSelector}>
-        {QR_TYPES.map((type) => (
-          <TouchableOpacity
-            key={type.value}
-            style={[
-              styles.typeButton,
-              qrType === type.value && { backgroundColor: theme.primary },
-            ]}
-            onPress={() => setQrType(type.value)}
-          >
-            <Text
+        )}
+        <Text style={[styles.title, { color: theme.primary }]}>
+          Generate QR Code
+        </Text>
+        <View style={styles.typeSelector}>
+          {QR_TYPES.map((type) => (
+            <TouchableOpacity
+              key={type.value}
               style={[
-                styles.typeButtonText,
-                qrType === type.value && { color: "#fff" },
+                styles.typeButton,
+                qrType === type.value && { backgroundColor: theme.primary },
               ]}
+              onPress={() => setQrType(type.value)}
             >
-              {type.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-      {(qrType === "url" || qrType === "text") && (
-        <TextInput
-          style={[
-            styles.input,
-            {
-              backgroundColor: theme.card,
-              color: theme.text,
-              borderColor: theme.primary + "33",
-            },
-          ]}
-          placeholder={getPlaceholder()}
-          placeholderTextColor={theme.text + "99"}
-          value={input}
-          onChangeText={setInput}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
-      )}
-      {qrType === "wifi" && (
-        <>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.card,
-                color: theme.text,
-                borderColor: theme.primary + "33",
-              },
-            ]}
-            placeholder="Wi-Fi SSID"
-            placeholderTextColor={theme.text + "99"}
-            value={wifiSSID}
-            onChangeText={setWifiSSID}
-          />
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.card,
-                color: theme.text,
-                borderColor: theme.primary + "33",
-              },
-            ]}
-            placeholder="Wi-Fi Password"
-            placeholderTextColor={theme.text + "99"}
-            value={wifiPassword}
-            onChangeText={setWifiPassword}
-          />
-          <View style={styles.typeSelector}>
-            {["WPA", "WEP", "nopass"].map((type) => (
-              <TouchableOpacity
-                key={type}
+              <Text
                 style={[
-                  styles.typeButton,
-                  wifiType === type && { backgroundColor: theme.primary },
+                  styles.typeButtonText,
+                  qrType === type.value && { color: "#fff" },
                 ]}
-                onPress={() => setWifiType(type)}
               >
-                <Text
+                {type.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        {(qrType === "url" || qrType === "text") && (
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.primary + "33",
+              },
+            ]}
+            placeholder={getPlaceholder()}
+            placeholderTextColor={theme.text + "99"}
+            value={input}
+            onChangeText={setInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        )}
+        {qrType === "wifi" && (
+          <>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.primary + "33",
+                },
+              ]}
+              placeholder="Wi-Fi SSID"
+              placeholderTextColor={theme.text + "99"}
+              value={wifiSSID}
+              onChangeText={setWifiSSID}
+            />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.primary + "33",
+                },
+              ]}
+              placeholder="Wi-Fi Password"
+              placeholderTextColor={theme.text + "99"}
+              value={wifiPassword}
+              onChangeText={setWifiPassword}
+            />
+            <View style={styles.typeSelector}>
+              {["WPA", "WEP", "nopass"].map((type) => (
+                <TouchableOpacity
+                  key={type}
                   style={[
-                    styles.typeButtonText,
-                    wifiType === type && { color: "#fff" },
+                    styles.typeButton,
+                    wifiType === type && { backgroundColor: theme.primary },
                   ]}
+                  onPress={() => setWifiType(type)}
                 >
-                  {type}
+                  <Text
+                    style={[
+                      styles.typeButtonText,
+                      wifiType === type && { color: "#fff" },
+                    ]}
+                  >
+                    {type}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </>
+        )}
+        {qrType === "vcard" && (
+          <>
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.primary + "33",
+                },
+              ]}
+              placeholder="Full Name"
+              placeholderTextColor={theme.text + "99"}
+              value={vcardName}
+              onChangeText={setVcardName}
+            />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.primary + "33",
+                },
+              ]}
+              placeholder="Phone"
+              placeholderTextColor={theme.text + "99"}
+              value={vcardPhone}
+              onChangeText={setVcardPhone}
+              keyboardType="phone-pad"
+            />
+            <TextInput
+              style={[
+                styles.input,
+                {
+                  backgroundColor: theme.card,
+                  color: theme.text,
+                  borderColor: theme.primary + "33",
+                },
+              ]}
+              placeholder="Email"
+              placeholderTextColor={theme.text + "99"}
+              value={vcardEmail}
+              onChangeText={setVcardEmail}
+              keyboardType="email-address"
+            />
+          </>
+        )}
+        {qrType === "image" && (
+          <>
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: theme.primary }]}
+              onPress={pickImage}
+              disabled={processing}
+            >
+              {processing ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>
+                  {selectedImage ? "Change Image" : "Pick Image"}
                 </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </>
-      )}
-      {qrType === "vcard" && (
-        <>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.card,
-                color: theme.text,
-                borderColor: theme.primary + "33",
-              },
-            ]}
-            placeholder="Full Name"
-            placeholderTextColor={theme.text + "99"}
-            value={vcardName}
-            onChangeText={setVcardName}
+              )}
+            </TouchableOpacity>
+            {selectedImage && (
+              <Image
+                source={{ uri: selectedImage }}
+                style={styles.imagePreview}
+                resizeMode="cover"
+              />
+            )}
+          </>
+        )}
+
+        {/* Collapsible Customize Section */}
+        <TouchableOpacity
+          style={styles.collapseToggle}
+          onPress={handleCustomizeToggle}
+          activeOpacity={0.8}
+        >
+          <Ionicons
+            name={showCustomize ? "chevron-up" : "chevron-down"}
+            size={22}
+            color={theme.primary}
           />
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.card,
-                color: theme.text,
-                borderColor: theme.primary + "33",
-              },
-            ]}
-            placeholder="Phone"
-            placeholderTextColor={theme.text + "99"}
-            value={vcardPhone}
-            onChangeText={setVcardPhone}
-            keyboardType="phone-pad"
-          />
-          <TextInput
-            style={[
-              styles.input,
-              {
-                backgroundColor: theme.card,
-                color: theme.text,
-                borderColor: theme.primary + "33",
-              },
-            ]}
-            placeholder="Email"
-            placeholderTextColor={theme.text + "99"}
-            value={vcardEmail}
-            onChangeText={setVcardEmail}
-            keyboardType="email-address"
-          />
-        </>
-      )}
-      {qrType === "image" && (
-        <>
-          <TouchableOpacity
-            style={[styles.button, { backgroundColor: theme.primary }]}
-            onPress={pickImage}
-            disabled={processing}
+          <Text style={[styles.collapseToggleText, { color: theme.primary }]}>
+            Customize QR Colors
+          </Text>
+        </TouchableOpacity>
+        {showCustomize && (
+          <View
+            style={[styles.customizePanel, { backgroundColor: theme.card }]}
           >
-            {processing ? (
-              <ActivityIndicator color="#fff" />
+            <Text style={[styles.sectionLabel, { color: theme.primary }]}>
+              QR Code Color
+            </Text>
+            <View style={styles.colorRow}>
+              {COLOR_PRESETS.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    qrColor === color && styles.selectedSwatch,
+                  ]}
+                  onPress={() => setQrColor(color)}
+                />
+              ))}
+            </View>
+            <Text style={[styles.sectionLabel, { color: theme.primary }]}>
+              Background Color
+            </Text>
+            <View style={styles.colorRow}>
+              {BG_COLOR_PRESETS.map((color) => (
+                <TouchableOpacity
+                  key={color}
+                  style={[
+                    styles.colorSwatch,
+                    { backgroundColor: color },
+                    bgColor === color && styles.selectedSwatch,
+                  ]}
+                  onPress={() => setBgColor(color)}
+                />
+              ))}
+            </View>
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={[styles.button, { backgroundColor: theme.primary }]}
+          onPress={handleGenerate}
+          disabled={
+            (qrType === "url" && !input.trim()) ||
+            (qrType === "text" && !input.trim()) ||
+            (qrType === "wifi" && (!wifiSSID.trim() || !wifiPassword.trim())) ||
+            (qrType === "vcard" && !vcardName.trim()) ||
+            (qrType === "image" && !imageRef)
+          }
+        >
+          <Text style={styles.buttonText}>Generate</Text>
+        </TouchableOpacity>
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: "png", quality: 1 }}
+          style={styles.qrContainer}
+        >
+          <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
+            {qrValue ? (
+              <QRCode
+                value={qrValue}
+                size={200}
+                color={qrColor}
+                backgroundColor={bgColor}
+                onError={() => {
+                  Alert.alert("Error", "Failed to generate QR code.");
+                  setQrValue("");
+                }}
+              />
             ) : (
-              <Text style={styles.buttonText}>
-                {selectedImage ? "Change Image" : "Pick Image"}
+              <Text style={[styles.placeholder, { color: theme.text + "99" }]}>
+                Your QR code will appear here
               </Text>
             )}
-          </TouchableOpacity>
-          {selectedImage && (
-            <Image
-              source={{ uri: selectedImage }}
-              style={styles.imagePreview}
-              resizeMode="cover"
-            />
-          )}
-        </>
-      )}
-
-      <TouchableOpacity
-        style={styles.collapseToggle}
-        onPress={handleCustomizeToggle}
-        activeOpacity={0.8}
-      >
-        <Ionicons
-          name={showCustomize ? "chevron-up" : "chevron-down"}
-          size={22}
-          color={theme.primary}
-        />
-        <Text style={[styles.collapseToggleText, { color: theme.primary }]}>
-          Customize QR Colors
-        </Text>
-      </TouchableOpacity>
-      {showCustomize && (
-        <View style={[styles.customizePanel, { backgroundColor: theme.card }]}>
-          <Text style={[styles.sectionLabel, { color: theme.primary }]}>
-            QR Code Color
-          </Text>
-          <View style={styles.colorRow}>
-            {COLOR_PRESETS.map((color) => (
-              <TouchableOpacity
-                key={color}
-                style={[
-                  styles.colorSwatch,
-                  { backgroundColor: color },
-                  qrColor === color && styles.selectedSwatch,
-                ]}
-                onPress={() => setQrColor(color)}
-              />
-            ))}
           </View>
-          <Text style={[styles.sectionLabel, { color: theme.primary }]}>
-            Background Color
-          </Text>
-          <View style={styles.colorRow}>
-            {BG_COLOR_PRESETS.map((color) => (
-              <TouchableOpacity
-                key={color}
-                style={[
-                  styles.colorSwatch,
-                  { backgroundColor: color },
-                  bgColor === color && styles.selectedSwatch,
-                ]}
-                onPress={() => setBgColor(color)}
-              />
-            ))}
+        </ViewShot>
+        {qrValue && (
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: "#28a745" }]}
+              onPress={saveQrToGallery}
+            >
+              <Text style={styles.actionButtonText}>Save to Gallery</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: "#28a745" }]}
+              onPress={shareQrCode}
+            >
+              <Text style={styles.actionButtonText}>Share QR Code</Text>
+            </TouchableOpacity>
           </View>
-        </View>
-      )}
-
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: theme.primary }]}
-        onPress={handleGenerate}
-        disabled={
-          (qrType === "url" && !input.trim()) ||
-          (qrType === "text" && !input.trim()) ||
-          (qrType === "wifi" && (!wifiSSID.trim() || !wifiPassword.trim())) ||
-          (qrType === "vcard" && !vcardName.trim()) ||
-          (qrType === "image" && !imageRef)
-        }
-      >
-        <Text style={styles.buttonText}>Generate</Text>
-      </TouchableOpacity>
-      <ViewShot
-        ref={viewShotRef}
-        options={{ format: "png", quality: 1 }}
-        style={styles.qrContainer}
-      >
-        <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
-          {qrValue ? (
-            <QRCode
-              value={qrValue}
-              size={200}
-              color={qrColor}
-              backgroundColor={bgColor}
-              onError={() => {
-                Alert.alert("Error", "Failed to generate QR code.");
-                setQrValue("");
-              }}
-            />
-          ) : (
-            <Text style={[styles.placeholder, { color: theme.text + "99" }]}>
-              Your QR code will appear here
-            </Text>
-          )}
-        </View>
-      </ViewShot>
-      {qrValue && (
-        <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: "#28a745" }]}
-            onPress={saveQrToGallery}
-          >
-            <Text style={styles.actionButtonText}>Save to Gallery</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: "#28a745" }]}
-            onPress={shareQrCode}
-          >
-            <Text style={styles.actionButtonText}>Share QR Code</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </ScrollView>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
