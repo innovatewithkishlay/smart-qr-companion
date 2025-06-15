@@ -9,6 +9,9 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  Platform,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
@@ -20,6 +23,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Crypto from "expo-crypto";
 import { QrHistoryItem } from "../types/QrHistory";
 import { addToHistory } from "../utils/history";
+import { Ionicons } from "@expo/vector-icons";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const QR_TYPES = [
   { label: "URL", value: "url" },
@@ -61,6 +72,7 @@ const GenerateScreen = () => {
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [processing, setProcessing] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
   const viewShotRef = useRef<ViewShot>(null);
 
   const getPlaceholder = () => {
@@ -86,13 +98,10 @@ const GenerateScreen = () => {
 
       if (!result.canceled && result.assets[0].uri) {
         setProcessing(true);
-
-        // Generate a unique ID for this image
         const imageId = await Crypto.digestStringAsync(
           Crypto.CryptoDigestAlgorithm.SHA256,
           result.assets[0].uri + Date.now()
         );
-
         const imageDir = `${FileSystem.documentDirectory}images/`;
         await FileSystem.makeDirectoryAsync(imageDir, { intermediates: true });
         const newPath = `${imageDir}${imageId}.jpg`;
@@ -100,9 +109,7 @@ const GenerateScreen = () => {
           from: result.assets[0].uri,
           to: newPath,
         });
-
         await AsyncStorage.setItem(imageId, newPath);
-
         setSelectedImage(newPath);
         setImageRef(imageId);
         setProcessing(false);
@@ -194,6 +201,11 @@ const GenerateScreen = () => {
     setImageRef("");
     setQrValue("");
   }, [qrType]);
+
+  const handleCustomizeToggle = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setShowCustomize((prev) => !prev);
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -322,34 +334,53 @@ const GenerateScreen = () => {
           )}
         </>
       )}
-      <Text style={styles.sectionLabel}>QR Code Color</Text>
-      <View style={styles.colorRow}>
-        {COLOR_PRESETS.map((color) => (
-          <TouchableOpacity
-            key={color}
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: color },
-              qrColor === color && styles.selectedSwatch,
-            ]}
-            onPress={() => setQrColor(color)}
-          />
-        ))}
-      </View>
-      <Text style={styles.sectionLabel}>Background Color</Text>
-      <View style={styles.colorRow}>
-        {BG_COLOR_PRESETS.map((color) => (
-          <TouchableOpacity
-            key={color}
-            style={[
-              styles.colorSwatch,
-              { backgroundColor: color },
-              bgColor === color && styles.selectedSwatch,
-            ]}
-            onPress={() => setBgColor(color)}
-          />
-        ))}
-      </View>
+
+      {/* Collapsible Customize Section */}
+      <TouchableOpacity
+        style={styles.collapseToggle}
+        onPress={handleCustomizeToggle}
+        activeOpacity={0.8}
+      >
+        <Ionicons
+          name={showCustomize ? "chevron-up" : "chevron-down"}
+          size={22}
+          color="#007bff"
+        />
+        <Text style={styles.collapseToggleText}>Customize QR Colors</Text>
+      </TouchableOpacity>
+      {showCustomize && (
+        <View style={styles.customizePanel}>
+          <Text style={styles.sectionLabel}>QR Code Color</Text>
+          <View style={styles.colorRow}>
+            {COLOR_PRESETS.map((color) => (
+              <TouchableOpacity
+                key={color}
+                style={[
+                  styles.colorSwatch,
+                  { backgroundColor: color },
+                  qrColor === color && styles.selectedSwatch,
+                ]}
+                onPress={() => setQrColor(color)}
+              />
+            ))}
+          </View>
+          <Text style={styles.sectionLabel}>Background Color</Text>
+          <View style={styles.colorRow}>
+            {BG_COLOR_PRESETS.map((color) => (
+              <TouchableOpacity
+                key={color}
+                style={[
+                  styles.colorSwatch,
+                  { backgroundColor: color },
+                  bgColor === color && styles.selectedSwatch,
+                ]}
+                onPress={() => setBgColor(color)}
+              />
+            ))}
+          </View>
+        </View>
+      )}
+
       <TouchableOpacity
         style={styles.button}
         onPress={handleGenerate}
@@ -431,27 +462,35 @@ const styles = StyleSheet.create({
     backgroundColor: "#fff",
   },
   title: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
-    marginVertical: 16,
+    marginVertical: 18,
+    color: "#1976d2",
+    letterSpacing: 1,
   },
   typeSelector: {
     flexDirection: "row",
     marginBottom: 12,
+    flexWrap: "wrap",
+    justifyContent: "center",
   },
   typeButton: {
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     borderRadius: 20,
     backgroundColor: "#eee",
     marginHorizontal: 4,
+    marginVertical: 4,
+    elevation: 1,
   },
   typeButtonActive: {
-    backgroundColor: "#007bff",
+    backgroundColor: "#1976d2",
+    elevation: 3,
   },
   typeButtonText: {
     color: "#333",
     fontWeight: "bold",
+    fontSize: 15,
   },
   typeButtonTextActive: {
     color: "#fff",
@@ -461,63 +500,80 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 8,
-    padding: 12,
+    padding: 13,
     marginVertical: 8,
+    fontSize: 16,
+    backgroundColor: "#f8f9fa",
   },
   sectionLabel: {
     fontWeight: "bold",
-    marginTop: 16,
-    marginBottom: 4,
+    marginTop: 10,
+    marginBottom: 6,
     alignSelf: "flex-start",
+    color: "#1976d2",
+    fontSize: 15,
+    letterSpacing: 0.5,
   },
   colorRow: {
     flexDirection: "row",
-    marginBottom: 8,
+    marginBottom: 10,
+    flexWrap: "wrap",
   },
   colorSwatch: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     marginHorizontal: 4,
     borderWidth: 2,
     borderColor: "#eee",
+    marginVertical: 3,
   },
   selectedSwatch: {
-    borderColor: "#007bff",
+    borderColor: "#1976d2",
     borderWidth: 3,
   },
   button: {
-    backgroundColor: "#007bff",
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 12,
+    backgroundColor: "#1976d2",
+    padding: 13,
+    borderRadius: 10,
+    marginVertical: 16,
     width: "100%",
     alignItems: "center",
+    elevation: 2,
   },
   buttonText: {
     color: "#fff",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 17,
+    letterSpacing: 0.5,
   },
   imagePreview: {
-    width: 200,
-    height: 200,
+    width: 160,
+    height: 160,
     marginVertical: 8,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
   },
   qrContainer: {
-    marginTop: 32,
+    marginTop: 28,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "transparent",
   },
   qrWrapper: {
-    padding: 20,
-    borderRadius: 12,
+    padding: 18,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 240,
-    minWidth: 240,
+    minHeight: 220,
+    minWidth: 220,
+    backgroundColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 8,
+    elevation: 2,
   },
   placeholder: {
     color: "#aaa",
@@ -526,7 +582,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 12,
-    marginTop: 20,
+    marginTop: 18,
     width: "100%",
   },
   actionButton: {
@@ -536,10 +592,41 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginHorizontal: 4,
+    elevation: 2,
   },
   actionButtonText: {
     color: "#fff",
     fontWeight: "bold",
+    fontSize: 15,
+  },
+  collapseToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginTop: 18,
+    marginBottom: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 2,
+  },
+  collapseToggleText: {
+    fontSize: 15,
+    color: "#007bff",
+    fontWeight: "bold",
+    marginLeft: 6,
+    letterSpacing: 0.2,
+  },
+  customizePanel: {
+    width: "100%",
+    backgroundColor: "#f4f8fb",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    marginTop: 2,
+    elevation: 1,
+    shadowColor: "#1976d2",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
   },
 });
 
