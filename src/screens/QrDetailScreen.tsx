@@ -13,10 +13,11 @@ import * as MediaLibrary from "expo-media-library";
 import * as Sharing from "expo-sharing";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "../types/navigation";
+import { Ionicons } from "@expo/vector-icons";
 
 const QrDetailScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "QrDetail">>();
-  const { value, color, bgColor, type } = route.params;
+  const { value, color, bgColor, type, resolvedImageUri } = route.params as any;
   const viewShotRef = useRef<ViewShot>(null);
 
   const saveQrToGallery = async () => {
@@ -24,11 +25,14 @@ const QrDetailScreen = () => {
       if (type === "image") {
         const permission = await MediaLibrary.requestPermissionsAsync();
         if (!permission.granted) return;
-        await MediaLibrary.saveToLibraryAsync(value);
-        Alert.alert("Success", "Image saved to gallery!");
+        if (resolvedImageUri) {
+          await MediaLibrary.saveToLibraryAsync(resolvedImageUri);
+          Alert.alert("Success", "Image saved to gallery!");
+        } else {
+          Alert.alert("Error", "Image not found.");
+        }
         return;
       }
-
       const uri = await viewShotRef.current?.capture?.();
       if (!uri) return;
       await MediaLibrary.saveToLibraryAsync(uri);
@@ -41,10 +45,13 @@ const QrDetailScreen = () => {
   const shareQrCode = async () => {
     try {
       if (type === "image") {
-        await Sharing.shareAsync(value);
+        if (resolvedImageUri) {
+          await Sharing.shareAsync(resolvedImageUri);
+        } else {
+          Alert.alert("Error", "Image not found.");
+        }
         return;
       }
-
       const uri = await viewShotRef.current?.capture?.();
       if (!uri) return;
       await Sharing.shareAsync(uri);
@@ -60,11 +67,27 @@ const QrDetailScreen = () => {
       </Text>
 
       {type === "image" ? (
-        <Image
-          source={{ uri: value }}
-          style={styles.imagePreview}
-          resizeMode="contain"
-        />
+        resolvedImageUri ? (
+          <Image
+            source={{ uri: resolvedImageUri }}
+            style={styles.imagePreview}
+            resizeMode="contain"
+          />
+        ) : (
+          <View
+            style={[
+              styles.imagePreview,
+              {
+                backgroundColor: "#eee",
+                justifyContent: "center",
+                alignItems: "center",
+              },
+            ]}
+          >
+            <Ionicons name="image-outline" size={60} color="#bbb" />
+            <Text style={{ color: "#bbb", marginTop: 8 }}>Image not found</Text>
+          </View>
+        )
       ) : (
         <ViewShot
           ref={viewShotRef}
