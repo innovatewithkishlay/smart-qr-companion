@@ -1,0 +1,9 @@
+node_modules
+.expo
+.git
+*.tar.gz
+*.zip
+*.mp4
+*.psd
+.DS_Store
+Thumbs.db
