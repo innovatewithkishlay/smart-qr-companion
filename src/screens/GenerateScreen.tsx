@@ -24,6 +24,7 @@ import * as Crypto from "expo-crypto";
 import { QrHistoryItem } from "../types/QrHistory";
 import { addToHistory } from "../utils/history";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 
 if (
   Platform.OS === "android" &&
@@ -58,6 +59,7 @@ const BG_COLOR_PRESETS = [
 ];
 
 const GenerateScreen = () => {
+  const { theme } = useTheme();
   const [qrType, setQrType] = useState("url");
   const [input, setInput] = useState("");
   const [wifiSSID, setWifiSSID] = useState("");
@@ -208,30 +210,39 @@ const GenerateScreen = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: theme.background },
+      ]}
+    >
       {processing && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#007bff" />
-            <Text style={styles.loadingText}>Processing Image...</Text>
+            <ActivityIndicator size="large" color={theme.primary} />
+            <Text style={[styles.loadingText, { color: theme.text }]}>
+              Processing Image...
+            </Text>
           </View>
         </View>
       )}
-      <Text style={styles.title}>Generate QR Code</Text>
+      <Text style={[styles.title, { color: theme.primary }]}>
+        Generate QR Code
+      </Text>
       <View style={styles.typeSelector}>
         {QR_TYPES.map((type) => (
           <TouchableOpacity
             key={type.value}
             style={[
               styles.typeButton,
-              qrType === type.value && styles.typeButtonActive,
+              qrType === type.value && { backgroundColor: theme.primary },
             ]}
             onPress={() => setQrType(type.value)}
           >
             <Text
               style={[
                 styles.typeButtonText,
-                qrType === type.value && styles.typeButtonTextActive,
+                qrType === type.value && { color: "#fff" },
               ]}
             >
               {type.label}
@@ -241,8 +252,16 @@ const GenerateScreen = () => {
       </View>
       {(qrType === "url" || qrType === "text") && (
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: theme.card,
+              color: theme.text,
+              borderColor: theme.primary + "33",
+            },
+          ]}
           placeholder={getPlaceholder()}
+          placeholderTextColor={theme.text + "99"}
           value={input}
           onChangeText={setInput}
           autoCapitalize="none"
@@ -252,14 +271,30 @@ const GenerateScreen = () => {
       {qrType === "wifi" && (
         <>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.primary + "33",
+              },
+            ]}
             placeholder="Wi-Fi SSID"
+            placeholderTextColor={theme.text + "99"}
             value={wifiSSID}
             onChangeText={setWifiSSID}
           />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.primary + "33",
+              },
+            ]}
             placeholder="Wi-Fi Password"
+            placeholderTextColor={theme.text + "99"}
             value={wifiPassword}
             onChangeText={setWifiPassword}
           />
@@ -269,14 +304,14 @@ const GenerateScreen = () => {
                 key={type}
                 style={[
                   styles.typeButton,
-                  wifiType === type && styles.typeButtonActive,
+                  wifiType === type && { backgroundColor: theme.primary },
                 ]}
                 onPress={() => setWifiType(type)}
               >
                 <Text
                   style={[
                     styles.typeButtonText,
-                    wifiType === type && styles.typeButtonTextActive,
+                    wifiType === type && { color: "#fff" },
                   ]}
                 >
                   {type}
@@ -289,21 +324,45 @@ const GenerateScreen = () => {
       {qrType === "vcard" && (
         <>
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.primary + "33",
+              },
+            ]}
             placeholder="Full Name"
+            placeholderTextColor={theme.text + "99"}
             value={vcardName}
             onChangeText={setVcardName}
           />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.primary + "33",
+              },
+            ]}
             placeholder="Phone"
+            placeholderTextColor={theme.text + "99"}
             value={vcardPhone}
             onChangeText={setVcardPhone}
             keyboardType="phone-pad"
           />
           <TextInput
-            style={styles.input}
+            style={[
+              styles.input,
+              {
+                backgroundColor: theme.card,
+                color: theme.text,
+                borderColor: theme.primary + "33",
+              },
+            ]}
             placeholder="Email"
+            placeholderTextColor={theme.text + "99"}
             value={vcardEmail}
             onChangeText={setVcardEmail}
             keyboardType="email-address"
@@ -313,7 +372,7 @@ const GenerateScreen = () => {
       {qrType === "image" && (
         <>
           <TouchableOpacity
-            style={styles.button}
+            style={[styles.button, { backgroundColor: theme.primary }]}
             onPress={pickImage}
             disabled={processing}
           >
@@ -335,7 +394,6 @@ const GenerateScreen = () => {
         </>
       )}
 
-      {/* Collapsible Customize Section */}
       <TouchableOpacity
         style={styles.collapseToggle}
         onPress={handleCustomizeToggle}
@@ -344,13 +402,17 @@ const GenerateScreen = () => {
         <Ionicons
           name={showCustomize ? "chevron-up" : "chevron-down"}
           size={22}
-          color="#007bff"
+          color={theme.primary}
         />
-        <Text style={styles.collapseToggleText}>Customize QR Colors</Text>
+        <Text style={[styles.collapseToggleText, { color: theme.primary }]}>
+          Customize QR Colors
+        </Text>
       </TouchableOpacity>
       {showCustomize && (
-        <View style={styles.customizePanel}>
-          <Text style={styles.sectionLabel}>QR Code Color</Text>
+        <View style={[styles.customizePanel, { backgroundColor: theme.card }]}>
+          <Text style={[styles.sectionLabel, { color: theme.primary }]}>
+            QR Code Color
+          </Text>
           <View style={styles.colorRow}>
             {COLOR_PRESETS.map((color) => (
               <TouchableOpacity
@@ -364,7 +426,9 @@ const GenerateScreen = () => {
               />
             ))}
           </View>
-          <Text style={styles.sectionLabel}>Background Color</Text>
+          <Text style={[styles.sectionLabel, { color: theme.primary }]}>
+            Background Color
+          </Text>
           <View style={styles.colorRow}>
             {BG_COLOR_PRESETS.map((color) => (
               <TouchableOpacity
@@ -382,7 +446,7 @@ const GenerateScreen = () => {
       )}
 
       <TouchableOpacity
-        style={styles.button}
+        style={[styles.button, { backgroundColor: theme.primary }]}
         onPress={handleGenerate}
         disabled={
           (qrType === "url" && !input.trim()) ||
@@ -412,7 +476,7 @@ const GenerateScreen = () => {
               }}
             />
           ) : (
-            <Text style={styles.placeholder}>
+            <Text style={[styles.placeholder, { color: theme.text + "99" }]}>
               Your QR code will appear here
             </Text>
           )}
@@ -421,12 +485,15 @@ const GenerateScreen = () => {
       {qrValue && (
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, { backgroundColor: "#28a745" }]}
             onPress={saveQrToGallery}
           >
             <Text style={styles.actionButtonText}>Save to Gallery</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={shareQrCode}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: "#28a745" }]}
+            onPress={shareQrCode}
+          >
             <Text style={styles.actionButtonText}>Share QR Code</Text>
           </TouchableOpacity>
         </View>
@@ -453,19 +520,16 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: "#333",
   },
   container: {
     flexGrow: 1,
     alignItems: "center",
     padding: 24,
-    backgroundColor: "#fff",
   },
   title: {
     fontSize: 26,
     fontWeight: "bold",
     marginVertical: 18,
-    color: "#1976d2",
     letterSpacing: 1,
   },
   typeSelector: {
@@ -498,19 +562,16 @@ const styles = StyleSheet.create({
   input: {
     width: "100%",
     borderWidth: 1,
-    borderColor: "#ccc",
     borderRadius: 8,
     padding: 13,
     marginVertical: 8,
     fontSize: 16,
-    backgroundColor: "#f8f9fa",
   },
   sectionLabel: {
     fontWeight: "bold",
     marginTop: 10,
     marginBottom: 6,
     alignSelf: "flex-start",
-    color: "#1976d2",
     fontSize: 15,
     letterSpacing: 0.5,
   },
@@ -533,7 +594,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
   },
   button: {
-    backgroundColor: "#1976d2",
     padding: 13,
     borderRadius: 10,
     marginVertical: 16,
@@ -576,7 +636,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   placeholder: {
-    color: "#aaa",
     fontSize: 16,
   },
   actionRow: {
@@ -587,7 +646,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: "#28a745",
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
@@ -610,14 +668,12 @@ const styles = StyleSheet.create({
   },
   collapseToggleText: {
     fontSize: 15,
-    color: "#007bff",
     fontWeight: "bold",
     marginLeft: 6,
     letterSpacing: 0.2,
   },
   customizePanel: {
     width: "100%",
-    backgroundColor: "#f4f8fb",
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
