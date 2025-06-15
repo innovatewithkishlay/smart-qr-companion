@@ -7,10 +7,13 @@ import {
   Alert,
   Linking,
   Clipboard,
+  Modal,
+  Image,
 } from "react-native";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useIsFocused } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
+import * as Animatable from "react-native-animatable";
 import { addToHistory } from "../utils/history";
 import { QrHistoryItem } from "../types/QrHistory";
 
@@ -20,6 +23,7 @@ const ScanScreen = () => {
   const [flashOn, setFlashOn] = useState(false);
   const [scannedData, setScannedData] = useState("");
   const [scannedType, setScannedType] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const isFocused = useIsFocused();
 
   const detectQRType = (data: string): string => {
@@ -37,6 +41,9 @@ const ScanScreen = () => {
     setScannedData(data);
     const type = detectQRType(data);
     setScannedType(type);
+
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 1200);
 
     const historyItem: QrHistoryItem = {
       id: Date.now().toString(),
@@ -145,6 +152,17 @@ const ScanScreen = () => {
           flash={flashOn ? "torch" : "off"}
           facing="back"
         >
+          {showSuccess && (
+            <Animatable.View
+              animation="bounceIn"
+              duration={800}
+              style={styles.successOverlay}
+            >
+              <Ionicons name="checkmark-circle" size={120} color="#28a745" />
+              <Text style={styles.successText}>Scan Successful!</Text>
+            </Animatable.View>
+          )}
+
           <View style={styles.overlay}>
             <View style={styles.header}>
               <Text style={styles.title}>Scan QR Code</Text>
@@ -348,6 +366,23 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
+  },
+  successOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(255,255,255,0.85)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1000,
+  },
+  successText: {
+    marginTop: 16,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#28a745",
   },
 });
 
