@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   Image,
+  ScrollView,
 } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import ViewShot from "react-native-view-shot";
@@ -23,20 +24,16 @@ const QrDetailScreen = () => {
   const saveQrToGallery = async () => {
     try {
       if (type === "image") {
-        const permission = await MediaLibrary.requestPermissionsAsync();
-        if (!permission.granted) return;
-        if (resolvedImageUri) {
-          await MediaLibrary.saveToLibraryAsync(resolvedImageUri);
-          Alert.alert("Success", "Image saved to gallery!");
-        } else {
-          Alert.alert("Error", "Image not found.");
-        }
-        return;
+        const uri = await viewShotRef.current?.capture?.();
+        if (!uri) return;
+        await MediaLibrary.saveToLibraryAsync(uri);
+        Alert.alert("Success", "QR code saved to gallery!");
+      } else {
+        const uri = await viewShotRef.current?.capture?.();
+        if (!uri) return;
+        await MediaLibrary.saveToLibraryAsync(uri);
+        Alert.alert("Success", "QR code saved to gallery!");
       }
-      const uri = await viewShotRef.current?.capture?.();
-      if (!uri) return;
-      await MediaLibrary.saveToLibraryAsync(uri);
-      Alert.alert("Success", "QR code saved to gallery!");
     } catch {
       Alert.alert("Error", "Could not save to gallery.");
     }
@@ -45,29 +42,42 @@ const QrDetailScreen = () => {
   const shareQrCode = async () => {
     try {
       if (type === "image") {
-        if (resolvedImageUri) {
-          await Sharing.shareAsync(resolvedImageUri);
-        } else {
-          Alert.alert("Error", "Image not found.");
-        }
-        return;
+        const uri = await viewShotRef.current?.capture?.();
+        if (!uri) return;
+        await Sharing.shareAsync(uri);
+      } else {
+        const uri = await viewShotRef.current?.capture?.();
+        if (!uri) return;
+        await Sharing.shareAsync(uri);
       }
-      const uri = await viewShotRef.current?.capture?.();
-      if (!uri) return;
-      await Sharing.shareAsync(uri);
     } catch {
       Alert.alert("Error", "Could not share.");
     }
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>
-        {type.toUpperCase()} {type === "image" ? "Preview" : "QR Code"}
+        {type.toUpperCase()} {type === "image" ? "QR & Preview" : "QR Code"}
       </Text>
 
-      {type === "image" ? (
-        resolvedImageUri ? (
+      <ViewShot
+        ref={viewShotRef}
+        options={{ format: "png", quality: 1.0 }}
+        style={styles.qrContainer}
+      >
+        <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
+          <QRCode
+            value={value}
+            size={200}
+            color={color}
+            backgroundColor={bgColor}
+          />
+        </View>
+      </ViewShot>
+
+      {type === "image" &&
+        (resolvedImageUri ? (
           <Image
             source={{ uri: resolvedImageUri }}
             style={styles.imagePreview}
@@ -87,51 +97,67 @@ const QrDetailScreen = () => {
             <Ionicons name="image-outline" size={60} color="#bbb" />
             <Text style={{ color: "#bbb", marginTop: 8 }}>Image not found</Text>
           </View>
-        )
-      ) : (
-        <ViewShot
-          ref={viewShotRef}
-          options={{ format: "png", quality: 1.0 }}
-          style={styles.qrContainer}
-        >
-          <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
-            <QRCode
-              value={value}
-              size={200}
-              color={color}
-              backgroundColor={bgColor}
-            />
-          </View>
-        </ViewShot>
-      )}
+        ))}
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.actionButton} onPress={saveQrToGallery}>
-          <Text style={styles.actionButtonText}>
-            {type === "image" ? "Save Image" : "Save QR Code"}
-          </Text>
+          <Text style={styles.actionButtonText}>Save QR Code</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton} onPress={shareQrCode}>
-          <Text style={styles.actionButtonText}>
-            {type === "image" ? "Share Image" : "Share QR Code"}
-          </Text>
+          <Text style={styles.actionButtonText}>Share QR Code</Text>
         </TouchableOpacity>
       </View>
-    </View>
+      {type === "image" && resolvedImageUri && (
+        <>
+          <View style={styles.divider} />
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={async () => {
+                try {
+                  const permission =
+                    await MediaLibrary.requestPermissionsAsync();
+                  if (!permission.granted) return;
+                  await MediaLibrary.saveToLibraryAsync(resolvedImageUri);
+                  Alert.alert("Success", "Image saved to gallery!");
+                } catch {
+                  Alert.alert("Error", "Could not save image.");
+                }
+              }}
+            >
+              <Text style={styles.actionButtonText}>Save Image</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={async () => {
+                try {
+                  await Sharing.shareAsync(resolvedImageUri);
+                } catch {
+                  Alert.alert("Error", "Could not share image.");
+                }
+              }}
+            >
+              <Text style={styles.actionButtonText}>Share Image</Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     alignItems: "center",
     padding: 24,
     backgroundColor: "#fff",
+    flexGrow: 1,
   },
   title: {
     fontSize: 24,
     fontWeight: "bold",
     marginVertical: 16,
+    textAlign: "center",
   },
   imagePreview: {
     width: 300,
@@ -149,12 +175,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     minHeight: 240,
     minWidth: 240,
+    alignItems: "center",
+    justifyContent: "center",
   },
   actionRow: {
     flexDirection: "row",
     gap: 12,
     marginTop: 20,
     width: "100%",
+    justifyContent: "center",
   },
   actionButton: {
     flex: 1,
@@ -162,10 +191,17 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     alignItems: "center",
+    marginHorizontal: 4,
   },
   actionButtonText: {
     color: "#fff",
     fontWeight: "bold",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: "#eee",
+    width: "100%",
+    marginVertical: 18,
   },
 });
 
