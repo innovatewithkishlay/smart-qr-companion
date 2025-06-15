@@ -15,25 +15,20 @@ import * as Sharing from "expo-sharing";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "../types/navigation";
 import { Ionicons } from "@expo/vector-icons";
+import { useTheme } from "../context/ThemeContext";
 
 const QrDetailScreen = () => {
+  const { theme } = useTheme();
   const route = useRoute<RouteProp<RootStackParamList, "QrDetail">>();
   const { value, color, bgColor, type, resolvedImageUri } = route.params as any;
   const viewShotRef = useRef<ViewShot>(null);
 
   const saveQrToGallery = async () => {
     try {
-      if (type === "image") {
-        const uri = await viewShotRef.current?.capture?.();
-        if (!uri) return;
-        await MediaLibrary.saveToLibraryAsync(uri);
-        Alert.alert("Success", "QR code saved to gallery!");
-      } else {
-        const uri = await viewShotRef.current?.capture?.();
-        if (!uri) return;
-        await MediaLibrary.saveToLibraryAsync(uri);
-        Alert.alert("Success", "QR code saved to gallery!");
-      }
+      const uri = await viewShotRef.current?.capture?.();
+      if (!uri) return;
+      await MediaLibrary.saveToLibraryAsync(uri);
+      Alert.alert("Success", "QR code saved to gallery!");
     } catch {
       Alert.alert("Error", "Could not save to gallery.");
     }
@@ -41,23 +36,22 @@ const QrDetailScreen = () => {
 
   const shareQrCode = async () => {
     try {
-      if (type === "image") {
-        const uri = await viewShotRef.current?.capture?.();
-        if (!uri) return;
-        await Sharing.shareAsync(uri);
-      } else {
-        const uri = await viewShotRef.current?.capture?.();
-        if (!uri) return;
-        await Sharing.shareAsync(uri);
-      }
+      const uri = await viewShotRef.current?.capture?.();
+      if (!uri) return;
+      await Sharing.shareAsync(uri);
     } catch {
       Alert.alert("Error", "Could not share.");
     }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.container,
+        { backgroundColor: theme.background },
+      ]}
+    >
+      <Text style={[styles.title, { color: theme.text }]}>
         {type.toUpperCase()} {type === "image" ? "QR & Preview" : "QR Code"}
       </Text>
 
@@ -150,7 +144,6 @@ const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     padding: 24,
-    backgroundColor: "#fff",
     flexGrow: 1,
   },
   title: {
