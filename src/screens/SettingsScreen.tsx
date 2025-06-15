@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../types/navigation";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const SettingsScreen = () => {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -42,37 +43,46 @@ const SettingsScreen = () => {
   ];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Settings</Text>
-      <View style={styles.card}>
-        {settings.map((item, idx) => (
-          <TouchableOpacity
-            key={item.label}
-            style={[
-              styles.row,
-              idx === settings.length - 1 ? { borderBottomWidth: 0 } : {},
-            ]}
-            onPress={item.onPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons name={item.icon as any} size={22} color="#007bff" />
-            <Text style={styles.label}>{item.label}</Text>
-            {item.value && <Text style={styles.value}>{item.value}</Text>}
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color="#bbb"
-              style={{ marginLeft: "auto" }}
-            />
-          </TouchableOpacity>
-        ))}
-      </View>
-      <Text style={styles.version}>Smart QR Companion v1.0.0</Text>
-    </ScrollView>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <Text style={styles.title}>Settings</Text>
+        <View style={styles.card}>
+          {settings.map((item, idx) => (
+            <TouchableOpacity
+              key={item.label}
+              style={[
+                styles.row,
+                idx === settings.length - 1 ? { borderBottomWidth: 0 } : {},
+              ]}
+              onPress={item.onPress}
+              activeOpacity={0.7}
+            >
+              <Ionicons name={item.icon as any} size={22} color="#007bff" />
+              <Text style={styles.label}>{item.label}</Text>
+              {item.value && <Text style={styles.value}>{item.value}</Text>}
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color="#bbb"
+                style={{ marginLeft: "auto" }}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={styles.version}>Smart QR Companion v1.0.0</Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f8f9fa",
+  },
   container: {
     flex: 1,
     backgroundColor: "#f8f9fa",
