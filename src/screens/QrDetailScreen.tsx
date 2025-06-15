@@ -16,6 +16,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "../types/navigation";
 import { Ionicons } from "@expo/vector-icons";
 import { useTheme } from "../context/ThemeContext";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const QrDetailScreen = () => {
   const { theme } = useTheme();
@@ -45,102 +46,114 @@ const QrDetailScreen = () => {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: theme.background },
-      ]}
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: theme.background }]}
     >
-      <Text style={[styles.title, { color: theme.text }]}>
-        {type.toUpperCase()} {type === "image" ? "QR & Preview" : "QR Code"}
-      </Text>
-
-      <ViewShot
-        ref={viewShotRef}
-        options={{ format: "png", quality: 1.0 }}
-        style={styles.qrContainer}
+      <ScrollView
+        contentContainerStyle={[
+          styles.container,
+          { backgroundColor: theme.background },
+        ]}
       >
-        <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
-          <QRCode
-            value={value}
-            size={200}
-            color={color}
-            backgroundColor={bgColor}
-          />
-        </View>
-      </ViewShot>
+        <Text style={[styles.title, { color: theme.text }]}>
+          {type.toUpperCase()} {type === "image" ? "QR & Preview" : "QR Code"}
+        </Text>
 
-      {type === "image" &&
-        (resolvedImageUri ? (
-          <Image
-            source={{ uri: resolvedImageUri }}
-            style={styles.imagePreview}
-            resizeMode="contain"
-          />
-        ) : (
-          <View
-            style={[
-              styles.imagePreview,
-              {
-                backgroundColor: "#eee",
-                justifyContent: "center",
-                alignItems: "center",
-              },
-            ]}
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: "png", quality: 1.0 }}
+          style={styles.qrContainer}
+        >
+          <View style={[styles.qrWrapper, { backgroundColor: bgColor }]}>
+            <QRCode
+              value={value}
+              size={200}
+              color={color}
+              backgroundColor={bgColor}
+            />
+          </View>
+        </ViewShot>
+
+        {type === "image" &&
+          (resolvedImageUri ? (
+            <Image
+              source={{ uri: resolvedImageUri }}
+              style={styles.imagePreview}
+              resizeMode="contain"
+            />
+          ) : (
+            <View
+              style={[
+                styles.imagePreview,
+                {
+                  backgroundColor: "#eee",
+                  justifyContent: "center",
+                  alignItems: "center",
+                },
+              ]}
+            >
+              <Ionicons name="image-outline" size={60} color="#bbb" />
+              <Text style={{ color: "#bbb", marginTop: 8 }}>
+                Image not found
+              </Text>
+            </View>
+          ))}
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={saveQrToGallery}
           >
-            <Ionicons name="image-outline" size={60} color="#bbb" />
-            <Text style={{ color: "#bbb", marginTop: 8 }}>Image not found</Text>
-          </View>
-        ))}
-
-      <View style={styles.actionRow}>
-        <TouchableOpacity style={styles.actionButton} onPress={saveQrToGallery}>
-          <Text style={styles.actionButtonText}>Save QR Code</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton} onPress={shareQrCode}>
-          <Text style={styles.actionButtonText}>Share QR Code</Text>
-        </TouchableOpacity>
-      </View>
-      {type === "image" && resolvedImageUri && (
-        <>
-          <View style={styles.divider} />
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={async () => {
-                try {
-                  const permission =
-                    await MediaLibrary.requestPermissionsAsync();
-                  if (!permission.granted) return;
-                  await MediaLibrary.saveToLibraryAsync(resolvedImageUri);
-                  Alert.alert("Success", "Image saved to gallery!");
-                } catch {
-                  Alert.alert("Error", "Could not save image.");
-                }
-              }}
-            >
-              <Text style={styles.actionButtonText}>Save Image</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={async () => {
-                try {
-                  await Sharing.shareAsync(resolvedImageUri);
-                } catch {
-                  Alert.alert("Error", "Could not share image.");
-                }
-              }}
-            >
-              <Text style={styles.actionButtonText}>Share Image</Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
-    </ScrollView>
+            <Text style={styles.actionButtonText}>Save QR Code</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton} onPress={shareQrCode}>
+            <Text style={styles.actionButtonText}>Share QR Code</Text>
+          </TouchableOpacity>
+        </View>
+        {type === "image" && resolvedImageUri && (
+          <>
+            <View style={styles.divider} />
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={async () => {
+                  try {
+                    const permission =
+                      await MediaLibrary.requestPermissionsAsync();
+                    if (!permission.granted) return;
+                    await MediaLibrary.saveToLibraryAsync(resolvedImageUri);
+                    Alert.alert("Success", "Image saved to gallery!");
+                  } catch {
+                    Alert.alert("Error", "Could not save image.");
+                  }
+                }}
+              >
+                <Text style={styles.actionButtonText}>Save Image</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={async () => {
+                  try {
+                    await Sharing.shareAsync(resolvedImageUri);
+                  } catch {
+                    Alert.alert("Error", "Could not share image.");
+                  }
+                }}
+              >
+                <Text style={styles.actionButtonText}>Share Image</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   container: {
     alignItems: "center",
     padding: 24,
