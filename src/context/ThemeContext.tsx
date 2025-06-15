@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  PropsWithChildren,
+} from "react";
 
 const themes = {
   light: {
@@ -15,7 +20,15 @@ const themes = {
   },
 };
 
-const ThemeContext = createContext({
+type ThemeMode = "light" | "dark";
+
+type ThemeContextType = {
+  theme: typeof themes.light;
+  mode: ThemeMode;
+  toggleTheme: () => void;
+};
+
+const ThemeContext = createContext<ThemeContextType>({
   theme: themes.light,
   mode: "light",
   toggleTheme: () => {},
@@ -23,8 +36,8 @@ const ThemeContext = createContext({
 
 export const useTheme = () => useContext(ThemeContext);
 
-export const ThemeProvider = ({ children }) => {
-  const [mode, setMode] = useState("light");
+export const ThemeProvider = ({ children }: PropsWithChildren<{}>) => {
+  const [mode, setMode] = useState<ThemeMode>("light");
   const toggleTheme = () => setMode((m) => (m === "light" ? "dark" : "light"));
   return (
     <ThemeContext.Provider value={{ theme: themes[mode], mode, toggleTheme }}>
