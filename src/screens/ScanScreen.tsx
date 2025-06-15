@@ -16,8 +16,10 @@ import { Ionicons } from "@expo/vector-icons";
 import * as Animatable from "react-native-animatable";
 import { addToHistory } from "../utils/history";
 import { QrHistoryItem } from "../types/QrHistory";
+import { useTheme } from "../context/ThemeContext";
 
 const ScanScreen = () => {
+  const { theme } = useTheme();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [flashOn, setFlashOn] = useState(false);
@@ -122,19 +124,27 @@ const ScanScreen = () => {
 
   if (!permission) {
     return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.permissionText}>Requesting camera access...</Text>
+      <View
+        style={[styles.centerContainer, { backgroundColor: theme.background }]}
+      >
+        <Text style={[styles.permissionText, { color: theme.text }]}>
+          Requesting camera access...
+        </Text>
       </View>
     );
   }
 
   if (!permission.granted) {
     return (
-      <View style={styles.centerContainer}>
-        <Ionicons name="camera-outline" size={40} color="#ff4444" />
-        <Text style={styles.permissionText}>Camera access denied</Text>
+      <View
+        style={[styles.centerContainer, { backgroundColor: theme.background }]}
+      >
+        <Ionicons name="camera-outline" size={40} color={theme.primary} />
+        <Text style={[styles.permissionText, { color: theme.text }]}>
+          Camera access denied
+        </Text>
         <TouchableOpacity
-          style={styles.permissionButton}
+          style={[styles.permissionButton, { backgroundColor: theme.primary }]}
           onPress={requestPermission}
         >
           <Text style={styles.permissionButtonText}>Enable Camera</Text>
@@ -144,7 +154,7 @@ const ScanScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: "#000" }]}>
       {isFocused && (
         <CameraView
           style={StyleSheet.absoluteFill}
@@ -156,16 +166,25 @@ const ScanScreen = () => {
             <Animatable.View
               animation="bounceIn"
               duration={800}
-              style={styles.successOverlay}
+              style={[
+                styles.successOverlay,
+                { backgroundColor: theme.background + "dd" },
+              ]}
             >
               <Ionicons name="checkmark-circle" size={120} color="#28a745" />
-              <Text style={styles.successText}>Scan Successful!</Text>
+              <Text style={[styles.successText, { color: "#28a745" }]}>
+                Scan Successful!
+              </Text>
             </Animatable.View>
           )}
 
           <View style={styles.overlay}>
-            <View style={styles.header}>
-              <Text style={styles.title}>Scan QR Code</Text>
+            <View
+              style={[styles.header, { backgroundColor: "rgba(0,0,0,0.5)" }]}
+            >
+              <Text style={[styles.title, { color: "#fff" }]}>
+                Scan QR Code
+              </Text>
               <TouchableOpacity
                 style={styles.flashButton}
                 onPress={() => setFlashOn(!flashOn)}
@@ -184,23 +203,34 @@ const ScanScreen = () => {
               <View style={[styles.corner, styles.bottomRight]} />
             </View>
             {scanned && (
-              <View style={styles.resultPanel}>
+              <View
+                style={[
+                  styles.resultPanel,
+                  { backgroundColor: theme.card + "ee" },
+                ]}
+              >
                 <View style={styles.resultHeader}>
-                  <Text style={styles.resultType}>
+                  <Text style={[styles.resultType, { color: theme.primary }]}>
                     {scannedType.toUpperCase()}
                   </Text>
                   <TouchableOpacity onPress={resetScanner}>
-                    <Ionicons name="close" size={24} color="#fff" />
+                    <Ionicons name="close" size={24} color={theme.text} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.resultText} numberOfLines={3}>
+                <Text
+                  style={[styles.resultText, { color: theme.text }]}
+                  numberOfLines={3}
+                >
                   {scannedData}
                 </Text>
                 <View style={styles.actionRow}>
                   {getSmartActions().map((action, index) => (
                     <TouchableOpacity
                       key={index}
-                      style={styles.actionButton}
+                      style={[
+                        styles.actionButton,
+                        { backgroundColor: theme.primary + "cc" },
+                      ]}
                       onPress={action.action}
                     >
                       <Ionicons
@@ -213,7 +243,10 @@ const ScanScreen = () => {
                   ))}
                 </View>
                 <TouchableOpacity
-                  style={styles.scanAgainButton}
+                  style={[
+                    styles.scanAgainButton,
+                    { backgroundColor: "#28a745" },
+                  ]}
                   onPress={resetScanner}
                 >
                   <Text style={styles.scanAgainText}>Scan Again</Text>
