@@ -14,15 +14,32 @@ import QRCode from "react-native-qrcode-svg";
 import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../types/navigation";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const HistoryScreen = () => {
   const [history, setHistory] = useState<QrHistoryItem[]>([]);
+  const [imageUris, setImageUris] = useState<{ [key: string]: string }>({});
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamList, "HistoryMain">>();
 
   const loadHistory = async () => {
     const data = await getHistory();
     setHistory(data);
+
+    const uris: { [key: string]: string } = {};
+    for (const item of data) {
+      if (item.type === "image") {
+        const match = item.value.match(/^smartqr:\/\/image\/(.+)$/);
+        if (match) {
+          const imageId = match[1];
+          const uri = await AsyncStorage.getItem(imageId);
+          if (uri) uris[item.id] = uri;
+        } else {
+          uris[item.id] = item.value;
+        }
+      }
+    }
+    setImageUris(uris);
   };
 
   useEffect(() => {
@@ -38,14 +55,34 @@ const HistoryScreen = () => {
   const renderItem = ({ item }: { item: QrHistoryItem }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => navigation.navigate("QrDetail", item)}
+      onPress={() =>
+        navigation.navigate("QrDetail", {
+          ...item,
+          resolvedImageUri: imageUris[item.id] || null,
+        })
+      }
     >
       {item.type === "image" ? (
-        <Image
-          source={{ uri: item.value }}
-          style={styles.thumbnail}
-          resizeMode="cover"
-        />
+        imageUris[item.id] ? (
+          <Image
+            source={{ uri: imageUris[item.id] }}
+            style={styles.thumbnail}
+            resizeMode="cover"
+          />
+        ) : (
+          <View
+            style={[
+              styles.thumbnail,
+              {
+                backgroundColor: "#eee",
+                justifyContent: "center",
+                alignItems: "center",
+              },
+            ]}
+          >
+            <Ionicons name="image-outline" size={32} color="#bbb" />
+          </View>
+        )
       ) : (
         <QRCode
           value={item.value}
