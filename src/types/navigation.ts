@@ -5,6 +5,7 @@ export type RootStackParamList = {
     color: string;
     bgColor: string;
     type: string;
+    resolvedImageUri?: string | null;
   };
   ThemeSettings: undefined;
   AboutScreen: undefined;
