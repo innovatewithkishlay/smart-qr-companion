@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/icon.png",
@@ -32,7 +32,6 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.qraft.app",
-      "versionCode": 1,
       "permissions": [
         "CAMERA",
         "WRITE_EXTERNAL_STORAGE",
@@ -47,7 +46,10 @@
     },
     "plugins": ["expo-barcode-scanner", "expo-mail-composer"],
     "extra": {
-      "slogan": "Craft, Scan, and Master QR Codes Effortlessly"
+      "slogan": "Craft, Scan, and Master QR Codes Effortlessly",
+      "eas": {
+        "projectId": "71b63e06-0d83-479b-8309-2ea2532dcd9b"
+      }
     }
   }
 }
